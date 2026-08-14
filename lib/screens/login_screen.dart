@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/challenge_provider.dart';
@@ -38,7 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      Provider.of<ChallengeProvider>(context, listen: false).addDailyLoginPoints(10);
+      Provider.of<ChallengeProvider>(context, listen: false)
+          .addDailyLoginPoints(10);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
@@ -48,7 +49,8 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(authProvider.errorMessage ?? 'Đăng nhập thất bại!'),
           backgroundColor: AppColors.appleRed,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -119,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Tài khoản tự động lưu, không cần đăng nhập lại',
+            'Tự động lưu tài khoản sau khi đăng nhập thành công',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.label2,
@@ -133,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
-              labelText: 'Email',
+              labelText: 'Địa chỉ Email',
               prefixIcon: Icon(Icons.email_outlined, size: 20),
             ),
             validator: (value) {
@@ -157,11 +159,14 @@ class _LoginScreenState extends State<LoginScreen> {
               prefixIcon: const Icon(Icons.lock_outline, size: 20),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   size: 20,
                   color: AppColors.label2,
                 ),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
             validator: (value) {
@@ -183,17 +188,22 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: AppColors.appleGreen,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
             ),
             child: authProvider.isLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2),
                   )
                 : const Text(
                     'ĐĂNG NHẬP',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5),
                   ),
           ),
           const SizedBox(height: 12),
@@ -202,7 +212,8 @@ class _LoginScreenState extends State<LoginScreen> {
           GestureDetector(
             onTap: authProvider.isLoading ? null : _fillAdminAccount,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -223,7 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: const Color(0xFF6C47FF),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 16),
+                    child: const Icon(Icons.shield_rounded,
+                        color: Colors.white, size: 16),
                   ),
                   const SizedBox(width: 10),
                   const Expanded(
@@ -231,32 +243,47 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Đăng nhập nhanh với quyền Admin',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF6C47FF)),
+                          'Đăng nhập nhanh quyền Admin',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF6C47FF)),
                         ),
                         Text(
                           'admin@healthtracker.app / Admin@123',
-                          style: TextStyle(fontSize: 11, color: AppColors.label2),
+                          style: TextStyle(
+                              fontSize: 11, color: AppColors.label2),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF6C47FF)),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      size: 14, color: Color(0xFF6C47FF)),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          // --- Divider ---
+          // Divider
           Row(
             children: [
-              Expanded(child: Divider(color: isDark ? AppColors.separator : Colors.grey.shade300)),
+              Expanded(
+                  child: Divider(
+                      color: isDark
+                          ? AppColors.separator
+                          : Colors.grey.shade300)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('hoặc', style: TextStyle(color: AppColors.label2, fontSize: 13)),
+                child: Text('hoặc',
+                    style: TextStyle(
+                        color: AppColors.label2, fontSize: 13)),
               ),
-              Expanded(child: Divider(color: isDark ? AppColors.separator : Colors.grey.shade300)),
+              Expanded(
+                  child: Divider(
+                      color: isDark
+                          ? AppColors.separator
+                          : Colors.grey.shade300)),
             ],
           ),
           const SizedBox(height: 12),
@@ -272,11 +299,14 @@ class _LoginScreenState extends State<LoginScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: isDark ? Colors.white70 : Colors.black87,
               side: BorderSide(
-                color: isDark ? AppColors.separator : Colors.grey.shade400,
+                color: isDark
+                    ? AppColors.separator
+                    : Colors.grey.shade400,
                 width: 1.5,
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
             ),
           ),
           const SizedBox(height: 20),
@@ -285,14 +315,15 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 'Chưa có tài khoản? ',
                 style: TextStyle(color: AppColors.label2, fontSize: 14),
               ),
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const RegisterScreen()),
                   );
                 },
                 child: const Text(
@@ -325,7 +356,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                          color: Colors.black
+                              .withValues(alpha: isDark ? 0.4 : 0.08),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -337,7 +369,8 @@ class _LoginScreenState extends State<LoginScreen> {
               )
             : Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28, vertical: 24),
                   child: formContent,
                 ),
               ),

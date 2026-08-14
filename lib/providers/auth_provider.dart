@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +8,6 @@ import '../models/user.dart';
 class AuthProvider with ChangeNotifier {
   static const String _keyUserId    = 'logged_user_id';
   static const String _keyUserEmail = 'logged_user_email';
-  // static const String _keyUserName  = 'logged_user_name';
   static const String _keyIsAdmin   = 'logged_is_admin';
   static const String _keyAllUsers  = 'all_registered_users';
 
@@ -40,7 +39,7 @@ class AuthProvider with ChangeNotifier {
     await _loadUserFromPrefs();
   }
 
-  /// Seed admin account into SharedPreferences if not exists
+  /// Khởi tạo tài khoản quản trị viên nếu chưa tồn tại
   Future<void> _seedAdminToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keyAllUsers) ?? '[]';
@@ -50,7 +49,7 @@ class AuthProvider with ChangeNotifier {
     if (!hasAdmin) {
       users.add({
         'id': 1,
-        'name': 'Administrator',
+        'name': 'Quản Trị Viên (Admin)',
         'email': _adminEmail,
         'password': _adminHash,
         'height': 170.0,
@@ -59,7 +58,6 @@ class AuthProvider with ChangeNotifier {
       });
       await prefs.setString(_keyAllUsers, jsonEncode(users));
     }
-    // Also seed into DatabaseHelper web store
     DatabaseHelper.instance.seedAdmin(_adminEmail, _adminHash);
   }
 
@@ -107,7 +105,7 @@ class AuthProvider with ChangeNotifier {
     _isGuest     = true;
     _currentUser = User(
       id: 999999,
-      name: 'Khach Trai Nghiem',
+      name: 'Khách Trải Nghiệm 👤',
       email: 'khach@healthtracker.app',
       password: '',
       height: 170.0,
@@ -127,10 +125,9 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Check existing in prefs
       final existing = await _getUserByEmailFromPrefs(email);
       if (existing != null) {
-        _errorMessage = 'Email nay da duoc dang ky!';
+        _errorMessage = 'Email này đã được đăng ký!';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -154,7 +151,6 @@ class AuthProvider with ChangeNotifier {
       await prefs.setString(_keyAllUsers, jsonEncode(decoded));
 
       final newUser = User.fromMap(Map<String, dynamic>.from(newUserMap));
-      // Also add to DatabaseHelper web store
       await DatabaseHelper.instance.createUser(newUser);
 
       _isGuest     = false;
@@ -166,7 +162,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Da xay ra loi khi dang ky: $e';
+      _errorMessage = 'Đã xảy ra lỗi khi đăng ký tài khoản: $e';
     }
 
     _isLoading = false;
@@ -182,22 +178,18 @@ class AuthProvider with ChangeNotifier {
     try {
       final hashedPassword = _hashPassword(password);
 
-      // First check SharedPreferences store (works on web + mobile)
       User? user = await _getUserByEmailFromPrefs(email);
-      if (user == null) {
-        // Fallback to database
-        user = await DatabaseHelper.instance.getUserByEmail(email);
-      }
+      user ??= await DatabaseHelper.instance.getUserByEmail(email);
 
       if (user == null) {
-        _errorMessage = 'Email chua duoc dang ky!';
+        _errorMessage = 'Email chưa được đăng ký trong hệ thống!';
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
       if (user.password != hashedPassword) {
-        _errorMessage = 'Mat khau khong chinh xac!';
+        _errorMessage = 'Mật khẩu không chính xác!';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -214,7 +206,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Da xay ra loi khi dang nhap: $e';
+      _errorMessage = 'Đã xảy ra lỗi khi đăng nhập: $e';
     }
 
     _isLoading = false;

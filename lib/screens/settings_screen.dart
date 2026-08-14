@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
@@ -68,19 +68,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         Text(
                           user?.name ?? 'Người dùng',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5),
                         ),
                         if (isAdmin) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFF6C47FF),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               'ADMIN',
-                              style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w900),
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900),
                             ),
                           ),
                         ],
@@ -89,21 +96,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       user?.email ?? '',
-                      style: const TextStyle(fontSize: 13, color: AppColors.label2),
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.label2),
                     ),
                     const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: (isAdmin ? const Color(0xFF6C47FF) : AppColors.appleGreen).withValues(alpha: 0.1),
+                        color: (isAdmin
+                                ? const Color(0xFF6C47FF)
+                                : AppColors.appleGreen)
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        isAdmin ? '👑 Quản trị viên hệ thống' : 'Chiều cao: ${user?.height ?? 170} cm',
+                        isAdmin
+                            ? '👑 Quản trị viên hệ thống'
+                            : 'Chiều cao: ${user?.height ?? 170} cm',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: isAdmin ? const Color(0xFF6C47FF) : AppColors.appleGreen,
+                          color: isAdmin
+                              ? const Color(0xFF6C47FF)
+                              : AppColors.appleGreen,
                         ),
                       ),
                     ),
@@ -115,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 20),
 
-        // Admin Dashboard Entry Tile (Accessible for Admin, or visible as Admin entry)
+        // Admin Dashboard Entry Tile
         Container(
           margin: const EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
@@ -139,7 +155,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(22),
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const AdminDashboardScreen()),
                 );
               },
               child: Padding(
@@ -152,7 +169,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 28),
+                      child: const Icon(Icons.admin_panel_settings_rounded,
+                          color: Colors.white, size: 28),
                     ),
                     const SizedBox(width: 16),
                     const Expanded(
@@ -160,18 +178,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Bảng Điều Khiển Admin',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                            'Bảng Điều Khiển Quản Trị (Admin)',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white),
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Quản lý người dùng, doanh thu quảng cáo & KPI',
-                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                            'Quản lý thành viên, doanh thu quảng cáo & báo cáo KPI',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.white70),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                    const Icon(Icons.arrow_forward_ios_rounded,
+                        color: Colors.white70, size: 16),
                   ],
                 ),
               ),
@@ -209,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.flag_rounded,
                 iconColor: AppColors.appleOrange,
                 title: 'Mục tiêu cá nhân',
-                subtitle: 'Nước, Giấc ngủ, Cân nặng, Vận động',
+                subtitle: 'Nước uống, Giấc ngủ, Cân nặng, Vận động',
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const GoalsScreen()),
@@ -224,7 +247,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: 'Xem lại màn hình giới thiệu 4 bước',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const OnboardingFlowScreen()),
                   );
                 },
               ),
@@ -267,13 +291,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }
           },
           icon: const Icon(Icons.logout_rounded, size: 20),
-          label: const Text('ĐĂNG XUẤT', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+          label: const Text('ĐĂNG XUẤT',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, letterSpacing: 0.5)),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.appleRed.withValues(alpha: 0.15),
             foregroundColor: AppColors.appleRed,
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
           ),
         ),
         const SizedBox(height: 20),
@@ -281,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // App Version
         const Center(
           child: Text(
-            'Health Tracker Pro v2.1.0 (Apple UI Edition)',
+            'Health Tracker Pro v2.2.0 (Phiên bản Apple Health UI)',
             style: TextStyle(fontSize: 12, color: AppColors.label3),
           ),
         ),
@@ -291,7 +318,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
       appBar: AppBar(
-        title: const Text('Cài Đặt', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5)),
+        title: const Text('Cài Đặt',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 24,
+                letterSpacing: -0.5)),
         automaticallyImplyLeading: false,
       ),
       body: isWide
@@ -334,13 +365,19 @@ class _SettingTile extends StatelessWidget {
         ),
         child: Icon(icon, color: iconColor, size: 22),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+      title: Text(title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
       subtitle: subtitle != null
-          ? Text(subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.label2))
+          ? Text(subtitle!,
+              style: const TextStyle(fontSize: 12, color: AppColors.label2))
           : null,
-      trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right_rounded, color: AppColors.label3) : null),
+      trailing: trailing ??
+          (onTap != null
+              ? const Icon(Icons.chevron_right_rounded, color: AppColors.label3)
+              : null),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 }
