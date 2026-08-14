@@ -14,7 +14,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);
 
-  // Ẩn thanh trạng thái hệ thống — giống Apple UI
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarBrightness: Brightness.dark,
@@ -28,31 +27,32 @@ class HealthTrackerApp extends StatelessWidget {
   const HealthTrackerApp({super.key});
 
   static TextTheme _buildTextTheme(TextTheme base) {
-    return GoogleFonts.dmSansTextTheme(base).copyWith(
-      displayLarge: GoogleFonts.dmSans(
+    return GoogleFonts.beVietnamProTextTheme(base).copyWith(
+      displayLarge: GoogleFonts.beVietnamPro(
         fontSize: 57, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-      headlineLarge: GoogleFonts.dmSans(
+      headlineLarge: GoogleFonts.beVietnamPro(
         fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-      headlineMedium: GoogleFonts.dmSans(
+      headlineMedium: GoogleFonts.beVietnamPro(
         fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.3),
-      titleLarge: GoogleFonts.dmSans(
+      titleLarge: GoogleFonts.beVietnamPro(
         fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.2),
-      titleMedium: GoogleFonts.dmSans(
+      titleMedium: GoogleFonts.beVietnamPro(
         fontSize: 16, fontWeight: FontWeight.w600),
-      bodyLarge: GoogleFonts.dmSans(
+      bodyLarge: GoogleFonts.beVietnamPro(
         fontSize: 16, fontWeight: FontWeight.w400),
-      bodyMedium: GoogleFonts.dmSans(
+      bodyMedium: GoogleFonts.beVietnamPro(
         fontSize: 14, fontWeight: FontWeight.w400),
-      bodySmall: GoogleFonts.dmSans(
+      bodySmall: GoogleFonts.beVietnamPro(
         fontSize: 12, fontWeight: FontWeight.w400),
-      labelLarge: GoogleFonts.dmSans(
-        fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+      labelLarge: GoogleFonts.beVietnamPro(
+        fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.2),
     );
   }
 
   ThemeData _darkTheme() => ThemeData(
     brightness: Brightness.dark,
     useMaterial3: true,
+    fontFamily: GoogleFonts.beVietnamPro().fontFamily,
     scaffoldBackgroundColor: AppColors.blackBg,
     primaryColor: AppColors.appleGreen,
     colorScheme: const ColorScheme.dark(
@@ -111,6 +111,7 @@ class HealthTrackerApp extends StatelessWidget {
   ThemeData _lightTheme() => ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
+    fontFamily: GoogleFonts.beVietnamPro().fontFamily,
     scaffoldBackgroundColor: AppColors.lightBg,
     primaryColor: AppColors.appleGreen,
     colorScheme: const ColorScheme.light(
