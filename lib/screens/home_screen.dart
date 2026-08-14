@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
@@ -18,6 +18,7 @@ import 'rewards_store_screen.dart';
 import 'statistics_screen.dart';
 import 'settings_screen.dart';
 import 'start_workout_screen.dart';
+import 'meal_scanner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = const [
     _DashboardTab(),
+    MealScannerScreen(),
     StartWorkoutScreen(),
     WaterScreen(),
     SleepScreen(),
@@ -61,18 +63,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: isWide
-          // ── Tablet/Desktop: Side Rail + Content ──────────────
           ? Row(
               children: [
                 _SideRail(
                   currentIndex: _currentIndex,
                   onTap: (i) => setState(() => _currentIndex = i),
                 ),
-                Expanded(child: _pages[_currentIndex]),
+                const VerticalDivider(thickness: 0.5, width: 1),
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentIndex,
+                    children: _pages,
+                  ),
+                ),
               ],
             )
-          // ── Phone: Normal Bottom Nav ───────────────────────────
-          : _pages[_currentIndex],
+          : IndexedStack(
+              index: _currentIndex,
+              children: _pages,
+            ),
       bottomNavigationBar: isWide
           ? null
           : CustomBottomNav(
@@ -83,9 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// Side Rail cho màn hình rộng (tablet/desktop)
-// ─────────────────────────────────────────────
 class _SideRail extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -93,89 +99,88 @@ class _SideRail extends StatelessWidget {
   const _SideRail({required this.currentIndex, required this.onTap});
 
   static const _items = [
-    (icon: Icons.square_rounded,          label: 'Tổng quan', color: AppColors.appleGreen),
-    (icon: Icons.bolt_rounded,             label: 'Tập luyện', color: AppColors.appleRed),
-    (icon: Icons.water_drop_rounded,       label: 'Nước',      color: AppColors.appleBlue),
-    (icon: Icons.bedtime_rounded,          label: 'Giấc ngủ', color: AppColors.applePurple),
-    (icon: Icons.monitor_weight_rounded,   label: 'Cân nặng', color: AppColors.appleOrange),
-    (icon: Icons.directions_run_rounded,   label: 'Vận động', color: AppColors.appleRed),
-    (icon: Icons.emoji_events_rounded,     label: 'Thử thách', color: AppColors.appleYellow),
+    (icon: Icons.square_rounded,          label: 'Tá»•ng quan', color: AppColors.appleGreen),
+    (icon: Icons.restaurant_rounded,       label: 'Ä‚n uá»‘ng',   color: AppColors.appleOrange),
+    (icon: Icons.bolt_rounded,             label: 'Táº­p luyá»‡n', color: AppColors.appleRed),
+    (icon: Icons.water_drop_rounded,       label: 'NÆ°á»›c',      color: AppColors.appleBlue),
+    (icon: Icons.bedtime_rounded,          label: 'Giáº¥c ngá»§', color: AppColors.applePurple),
+    (icon: Icons.monitor_weight_rounded,   label: 'CĂ¢n náº·ng', color: AppColors.appleOrange),
+    (icon: Icons.directions_run_rounded,   label: 'Váº­n Ä‘á»™ng', color: AppColors.appleRed),
+    (icon: Icons.emoji_events_rounded,     label: 'Thá»­ thĂ¡ch', color: AppColors.appleYellow),
     (icon: Icons.stars_rounded,            label: 'KOLs',     color: AppColors.appleGreen),
-    (icon: Icons.lightbulb_rounded,        label: 'Mẹo hay',   color: AppColors.appleTeal),
-    (icon: Icons.card_giftcard_rounded,    label: 'Đổi Quà',  color: AppColors.appleRed),
-    (icon: Icons.bar_chart_rounded,        label: 'Thống kê', color: AppColors.appleTeal),
+    (icon: Icons.lightbulb_rounded,        label: 'Máº¹o hay',   color: AppColors.appleTeal),
+    (icon: Icons.card_giftcard_rounded,    label: 'Äá»•i QuĂ ',  color: AppColors.appleRed),
+    (icon: Icons.bar_chart_rounded,        label: 'Thá»‘ng kĂª', color: AppColors.appleTeal),
   ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
-      width: 200,
+      width: 100,
       decoration: BoxDecoration(
         color: isDark ? AppColors.card1 : Colors.white,
-        border: Border(
-          right: BorderSide(
-            color: isDark ? AppColors.separator : const Color(0xFFE5E5EA),
-            width: 0.5,
-          ),
-        ),
       ),
       child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.appleRed, AppColors.appleGreen],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.appleRed, AppColors.appleGreen],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _items.length,
+                itemBuilder: (context, i) {
+                  final item = _items[i];
+                  final isSelected = currentIndex == i;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: InkWell(
+                      onTap: () => onTap(i),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? item.color.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              item.icon,
+                              size: 20,
+                              color: isSelected ? item.color : AppColors.label2,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item.label,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: isSelected ? item.color : AppColors.label2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text('Health Pro',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                ],
+                  );
+                },
               ),
             ),
-            ..._items.asMap().entries.map((e) {
-              final i = e.key;
-              final item = e.value;
-              final isActive = currentIndex == i;
-              return InkWell(
-                onTap: () => onTap(i),
-                borderRadius: BorderRadius.circular(12),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isActive ? item.color.withValues(alpha: 0.15) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(item.icon, size: 20,
-                        color: isActive ? item.color : AppColors.label3),
-                      const SizedBox(width: 12),
-                      Text(item.label,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                          color: isActive ? item.color : AppColors.label2,
-                        )),
-                    ],
-                  ),
-                ),
-              );
-            }),
           ],
         ),
       ),
@@ -183,362 +188,244 @@ class _SideRail extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Dashboard Tab
-// ─────────────────────────────────────────────
 class _DashboardTab extends StatelessWidget {
   const _DashboardTab();
 
   @override
   Widget build(BuildContext context) {
-    final auth   = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
     final health = Provider.of<HealthProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isWide = AppConstants.isWide(context);
+    final today = DateFormat('EEEE, d MMMM', 'vi').format(DateTime.now());
 
-    final name = auth.currentUser?.name.split(' ').last ?? 'bạn';
-    final now  = DateTime.now();
-    final hour = now.hour;
-    final greeting = hour < 12 ? 'Chào buổi sáng' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
-    final todayStr  = DateFormat('EEEE, d MMMM', 'vi').format(now);
+    // Apple-style ring metrics
+    final moveCalories = (health.todayActivityMinutes * 6.5).round();
+    final moveProgress = (moveCalories / 500).clamp(0.0, 1.0);
+    final exerciseProgress = (health.todayActivityMinutes / 30).clamp(0.0, 1.0);
+    final standProgress = (health.todayWaterTotal / 2000).clamp(0.0, 1.0);
 
-    // Progress values
-    final waterP    = health.goal.waterGoal > 0
-        ? (health.todayWaterTotal / health.goal.waterGoal).clamp(0.0, 1.5)
-        : 0.0;
-    final activityP = health.goal.activityGoal > 0
-        ? (health.todayActivityMinutes / health.goal.activityGoal).clamp(0.0, 1.5)
-        : 0.0;
-    final sleepP    = (health.goal.sleepGoal > 0 && health.latestSleep != null)
-        ? (health.latestSleep!.duration / health.goal.sleepGoal).clamp(0.0, 1.5)
-        : 0.0;
-    final weightBmi = health.latestWeight?.bmi ?? 0.0;
-
-    // Calories estimate
-    final calories  = (health.todayActivityMinutes * 7.5).toInt();
-
-    Widget content = CustomScrollView(
-      slivers: [
-        // ── App Bar ──────────────────────────────────────────
-        SliverToBoxAdapter(
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 16, isWide ? 28 : 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(greeting,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? AppColors.label2 : AppColors.subtitleLight,
-                          )),
-                        const SizedBox(height: 2),
-                        Text('$greeting, $name 👋',
+                        Text(
+                          today.toUpperCase(),
                           style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          )),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.label2,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        Text(todayStr,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? AppColors.label2 : AppColors.subtitleLight,
-                          )),
+                        Text(
+                          'ChĂ o, ${auth.currentUser?.name ?? 'Báº¡n'} đŸ‘‹',
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.account_circle_outlined, size: 30),
-                    onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                  ),
-                ],
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.card2 : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.settings_outlined, size: 22),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
 
-        // ── Activity Ring Section ─────────────────────────────
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isWide ? 28 : 20, vertical: 28),
-            child: isWide
-                // Landscape: ring kế bên stats
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _buildRing(context, activityP, sleepP, waterP, calories, health, isWide),
-                      const SizedBox(width: 36),
-                      Expanded(child: _buildRingLegend(context, activityP, sleepP, waterP, health)),
+            // Rings Section
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.card1 : Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
                     ],
-                  )
-                // Portrait: ring trên, stats dưới
-                : Column(
+                  ),
+                  child: Row(
                     children: [
-                      _buildRing(context, activityP, sleepP, waterP, calories, health, isWide),
-                      const SizedBox(height: 24),
-                      _buildRingLegend(context, activityP, sleepP, waterP, health),
+                      SizedBox(
+                        width: 130,
+                        height: 130,
+                        child: ActivityRingWidget(
+                          moveProgress: moveProgress,
+                          exerciseProgress: exerciseProgress,
+                          hydrationProgress: standProgress,
+                          size: 130,
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _RingLegend(
+                              color: AppColors.appleRed,
+                              label: 'DI CHUYá»‚N',
+                              value: '$moveCalories / 500 kcal',
+                            ),
+                            const SizedBox(height: 12),
+                            _RingLegend(
+                              color: AppColors.appleGreen,
+                              label: 'Táº¬P LUYá»†N',
+                              value: '${health.todayActivityMinutes} / 30 PHĂT',
+                            ),
+                            const SizedBox(height: 12),
+                            _RingLegend(
+                              color: AppColors.appleBlue,
+                              label: 'Uá»NG NÆ¯á»C',
+                              value: '${health.todayWaterTotal} / 2000 ML',
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-          ),
-        ),
-
-        // ── Stats Row ─────────────────────────────────────────
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: Row(
-              children: [
-                _StatPill(label: 'Calories', value: '$calories', unit: 'kcal', color: AppColors.appleRed),
-                const SizedBox(width: 12),
-                _StatPill(label: 'Tập luyện', value: '${health.todayActivityMinutes}', unit: 'phút', color: AppColors.appleGreen),
-                const SizedBox(width: 12),
-                _StatPill(label: 'Nước', value: '${health.todayWaterTotal}', unit: 'ml', color: AppColors.appleBlue),
-              ],
+                ),
+              ),
             ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-        // ── Metric Cards Grid ─────────────────────────────────
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            isWide ? 28 : 20, 0, isWide ? 28 : 20, 100),
-          sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isWide ? 4 : 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing:  14,
-              childAspectRatio: isWide ? 1.1 : 0.95,
-            ),
-            delegate: SliverChildListDelegate([
-              MetricCard(
-                title:       'Uống Nước',
-                value:       '${health.todayWaterTotal}',
-                unit:        '/ ${health.goal.waterGoal} ml',
-                subtitle:    'Mục tiêu hàng ngày',
-                icon:        Icons.water_drop_rounded,
-                accentColor: AppColors.appleBlue,
-                progress:    waterP,
-                onTap: () {},
-              ),
-              MetricCard(
-                title:       'Giấc Ngủ',
-                value:       health.latestSleep != null
-                    ? health.latestSleep!.duration.toStringAsFixed(1) : '0.0',
-                unit:        '/ ${health.goal.sleepGoal}h',
-                subtitle:    health.latestSleep?.quality ?? 'Chưa ghi nhận',
-                icon:        Icons.bedtime_rounded,
-                accentColor: AppColors.applePurple,
-                progress:    sleepP,
-                onTap: () {},
-              ),
-              MetricCard(
-                title:       'Cân Nặng',
-                value:       health.latestWeight != null
-                    ? '${health.latestWeight!.weight}' : '--',
-                unit:        'kg',
-                subtitle:    AppConstants.getBMICategory(weightBmi),
-                icon:        Icons.monitor_weight_rounded,
-                accentColor: AppColors.appleOrange,
-                progress:    weightBmi > 0 ? (weightBmi / 30.0).clamp(0.0, 1.0) : 0.0,
-                onTap: () {},
-              ),
-              MetricCard(
-                title:       'Vận Động',
-                value:       '${health.todayActivityMinutes}',
-                unit:        '/ ${health.goal.activityGoal} phút',
-                subtitle:    'Phút thể thao',
-                icon:        Icons.directions_run_rounded,
-                accentColor: AppColors.appleRed,
-                progress:    activityP,
-                onTap: () {},
-              ),
-            ]),
-          ),
-        ),
-      ],
-    );
-
-    if (isWide) {
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 960),
-          child: content,
-        ),
-      );
-    }
-    return content;
-  }
-
-  Widget _buildRing(BuildContext context,
-      double activityP, double sleepP, double waterP,
-      int calories, HealthProvider health, bool isWide) {
-    final size = isWide ? 220.0 : 200.0;
-    return ActivityRingWidget(
-      size: size,
-      moveProgress:      activityP,
-      exerciseProgress:  sleepP,
-      hydrationProgress: waterP,
-      centerWidget: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.favorite_rounded, color: AppColors.appleRed, size: 20),
-          const SizedBox(height: 4),
-          Text('$calories',
-            style: const TextStyle(
-              fontSize: 28, fontWeight: FontWeight.w800,
-              letterSpacing: -1, color: Colors.white)),
-          const Text('kcal',
-            style: TextStyle(fontSize: 11, color: AppColors.label2, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRingLegend(BuildContext context,
-      double activityP, double sleepP, double waterP, HealthProvider health) {
-    return Column(
-      children: [
-        _RingLegendRow(
-          color: AppColors.appleRed,
-          label: 'Vận động',
-          value: '${health.todayActivityMinutes} / ${health.goal.activityGoal} phút',
-          percent: activityP,
-        ),
-        const SizedBox(height: 14),
-        _RingLegendRow(
-          color: AppColors.appleGreen,
-          label: 'Giấc ngủ',
-          value: health.latestSleep != null
-              ? '${health.latestSleep!.duration.toStringAsFixed(1)} / ${health.goal.sleepGoal} giờ'
-              : 'Chưa ghi nhận',
-          percent: sleepP,
-        ),
-        const SizedBox(height: 14),
-        _RingLegendRow(
-          color: AppColors.appleBlue,
-          label: 'Nước',
-          value: '${health.todayWaterTotal} / ${health.goal.waterGoal} ml',
-          percent: waterP,
-        ),
-      ],
-    );
-  }
-}
-
-class _RingLegendRow extends StatelessWidget {
-  final Color  color;
-  final String label;
-  final String value;
-  final double percent;
-
-  const _RingLegendRow({
-    required this.color,
-    required this.label,
-    required this.value,
-    required this.percent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 12, height: 12,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Metrics Grid
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 100),
+              sliver: SliverGrid.count(
+                crossAxisCount: isWide ? 4 : 2,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text('${(percent * 100).clamp(0, 999).toStringAsFixed(0)}%',
-                    style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w700)),
+                  MetricCard(
+                    title: 'Náº¡p Calo',
+                    value: '${health.todayCaloriesIn}',
+                    unit: 'kcal',
+                    icon: Icons.restaurant_rounded,
+                    accentColor: AppColors.appleOrange,
+                    progress: (health.todayCaloriesIn / 2000).clamp(0.0, 1.0),
+                    subtitle: '${health.todayMeals.length} bá»¯a Äƒn hĂ´m nay',
+                    onTap: () {},
+                  ),
+                  MetricCard(
+                    title: 'NÆ°á»›c uá»‘ng',
+                    value: '${health.todayWaterTotal}',
+                    unit: 'ml',
+                    icon: Icons.water_drop_rounded,
+                    accentColor: AppColors.appleBlue,
+                    progress: (health.todayWaterTotal / 2000).clamp(0.0, 1.0),
+                    subtitle: 'Má»¥c tiĂªu: 2,000 ml',
+                    onTap: () {},
+                  ),
+                  MetricCard(
+                    title: 'Giáº¥c ngá»§',
+                    value: health.latestSleep != null
+                        ? '${health.latestSleep!.duration ~/ 60}h ${health.latestSleep!.duration % 60}m'
+                        : '--',
+                    unit: '',
+                    icon: Icons.bedtime_rounded,
+                    accentColor: AppColors.applePurple,
+                    progress: health.latestSleep != null ? (health.latestSleep!.duration / 480).clamp(0.0, 1.0) : 0.0,
+                    subtitle: health.latestSleep?.quality ?? 'ChÆ°a ghi nháº­n',
+                    onTap: () {},
+                  ),
+                  MetricCard(
+                    title: 'CĂ¢n náº·ng',
+                    value: health.latestWeight != null
+                        ? '${health.latestWeight!.weight}'
+                        : '--',
+                    unit: 'kg',
+                    icon: Icons.monitor_weight_rounded,
+                    accentColor: AppColors.appleOrange,
+                    progress: 0.7,
+                    subtitle: health.latestWeight != null
+                        ? 'BMI: ${health.latestWeight!.bmi.toStringAsFixed(1)}'
+                        : 'ChÆ°a Ä‘o',
+                    onTap: () {},
+                  ),
                 ],
               ),
-              const SizedBox(height: 4),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value:  percent.clamp(0.0, 1.0),
-                  minHeight: 5,
-                  backgroundColor: color.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(value,
-                style: TextStyle(fontSize: 11, color: AppColors.label2)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatPill extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final Color  color;
-
-  const _StatPill({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.card1 : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(value,
-                  style: TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w800,
-                    color: color, letterSpacing: -0.5)),
-                const SizedBox(width: 3),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(unit,
-                    style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
-                ),
-              ],
             ),
-            const SizedBox(height: 2),
-            Text(label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? AppColors.label2 : AppColors.subtitleLight,
-              )),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RingLegend extends StatelessWidget {
+  final Color color;
+  final String label;
+  final String value;
+
+  const _RingLegend({required this.color, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: color,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

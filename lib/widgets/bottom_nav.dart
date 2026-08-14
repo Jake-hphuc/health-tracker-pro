@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
 class CustomBottomNav extends StatelessWidget {
@@ -12,17 +12,17 @@ class CustomBottomNav extends StatelessWidget {
   });
 
   static const _items = [
-    _NavItem(icon: Icons.square_rounded,          label: 'Tổng quan', activeColor: AppColors.appleGreen),
-    _NavItem(icon: Icons.bolt_rounded,             label: 'Tập luyện', activeColor: AppColors.appleRed),
-    _NavItem(icon: Icons.water_drop_rounded,       label: 'Nước',      activeColor: AppColors.appleBlue),
-    _NavItem(icon: Icons.bedtime_rounded,          label: 'Giấc ngủ', activeColor: AppColors.applePurple),
-    _NavItem(icon: Icons.monitor_weight_rounded,   label: 'Cân nặng', activeColor: AppColors.appleOrange),
-    _NavItem(icon: Icons.directions_run_rounded,   label: 'Vận động', activeColor: AppColors.appleRed),
-    _NavItem(icon: Icons.emoji_events_rounded,     label: 'Thử thách', activeColor: AppColors.appleYellow),
+    _NavItem(icon: Icons.square_rounded,          label: 'Tá»•ng quan', activeColor: AppColors.appleGreen),
+    _NavItem(icon: Icons.bolt_rounded,             label: 'Táº­p luyá»‡n', activeColor: AppColors.appleRed),
+    _NavItem(icon: Icons.water_drop_rounded,       label: 'NÆ°á»›c',      activeColor: AppColors.appleBlue),
+    _NavItem(icon: Icons.bedtime_rounded,          label: 'Giáº¥c ngá»§', activeColor: AppColors.applePurple),
+    _NavItem(icon: Icons.monitor_weight_rounded,   label: 'CĂ¢n náº·ng', activeColor: AppColors.appleOrange),
+    _NavItem(icon: Icons.directions_run_rounded,   label: 'Váº­n Ä‘á»™ng', activeColor: AppColors.appleRed),
+    _NavItem(icon: Icons.emoji_events_rounded,     label: 'Thá»­ thĂ¡ch', activeColor: AppColors.appleYellow),
     _NavItem(icon: Icons.stars_rounded,            label: 'KOLs',     activeColor: AppColors.appleGreen),
-    _NavItem(icon: Icons.lightbulb_rounded,        label: 'Mẹo hay',  activeColor: AppColors.appleTeal),
-    _NavItem(icon: Icons.card_giftcard_rounded,    label: 'Đổi Quà',  activeColor: AppColors.appleRed),
-    _NavItem(icon: Icons.bar_chart_rounded,        label: 'Thống kê', activeColor: AppColors.appleTeal),
+    _NavItem(icon: Icons.lightbulb_rounded,        label: 'Máº¹o hay',  activeColor: AppColors.appleTeal),
+    _NavItem(icon: Icons.card_giftcard_rounded,    label: 'Äá»•i QuĂ ',  activeColor: AppColors.appleRed),
+    _NavItem(icon: Icons.bar_chart_rounded,        label: 'Thá»‘ng kĂª', activeColor: AppColors.appleTeal),
   ];
 
   @override

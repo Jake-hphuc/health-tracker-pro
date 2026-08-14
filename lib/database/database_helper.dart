@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+﻿import '../models/meal_record.dart';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -14,6 +15,8 @@ class DatabaseHelper {
   static Database? _database;
 
   // In-Memory Data Store cho Web Fallback
+  final List<MealRecord> _webMeals = [];
+  int _webMealAutoId = 1;
   final List<User> _webUsers = [];
   final List<WaterIntake> _webWater = [];
   final List<SleepRecord> _webSleep = [];
@@ -186,6 +189,65 @@ class DatabaseHelper {
     return null;
   }
 
+  // ==================== MEAL CRUD ====================
+  Future<int> insertMeal(MealRecord meal) async {
+    if (kIsWeb) {
+      final id = _webMealAutoId++;
+      _webMeals.insert(0, MealRecord(
+        id: id,
+        userId: meal.userId,
+        name: meal.name,
+        mealType: meal.mealType,
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fat: meal.fat,
+        imagePath: meal.imagePath,
+        date: meal.date,
+        time: meal.time,
+      ));
+      return id;
+    }
+    final db = await instance.database;
+    return await db!.insert('meal_records', meal.toMap());
+  }
+
+  Future<List<MealRecord>> getMealsByDate(int userId, String date) async {
+    if (kIsWeb) {
+      return _webMeals.where((m) => m.userId == userId && m.date == date).toList();
+    }
+    final db = await instance.database;
+    final result = await db!.query(
+      'meal_records',
+      where: 'user_id = ? AND date = ?',
+      whereArgs: [userId, date],
+      orderBy: 'id DESC',
+    );
+    return result.map((map) => MealRecord.fromMap(map)).toList();
+  }
+
+  Future<int> getTotalCaloriesByDate(int userId, String date) async {
+    if (kIsWeb) {
+      final list = _webMeals.where((m) => m.userId == userId && m.date == date);
+      return list.fold<int>(0, (sum, item) => sum + item.calories);
+    }
+    final db = await instance.database;
+    final result = await db!.rawQuery('''
+      SELECT SUM(calories) as total FROM meal_records 
+      WHERE user_id = ? AND date = ?
+    ''', [userId, date]);
+    final total = result.first['total'];
+    return (total as num?)?.toInt() ?? 0;
+  }
+
+  Future<int> deleteMeal(int id) async {
+    if (kIsWeb) {
+      _webMeals.removeWhere((m) => m.id == id);
+      return 1;
+    }
+    final db = await instance.database;
+    return await db!.delete('meal_records', where: 'id = ?', whereArgs: [id]);
+  }
   // ==================== WATER CRUD ====================
   Future<int> insertWater(WaterIntake water) async {
     if (kIsWeb) {

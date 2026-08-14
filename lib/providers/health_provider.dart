@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import '../models/meal_record.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../database/database_helper.dart';
 import '../models/water_intake.dart';
@@ -11,6 +12,12 @@ import '../utils/bmi_calculator.dart';
 class HealthProvider with ChangeNotifier {
   int? _userId;
 
+  // Meal / Nutrition Data
+  List<MealRecord> _todayMeals = [];
+  int _todayCaloriesIn = 0;
+  double _todayProtein = 0;
+  double _todayCarbs = 0;
+  double _todayFat = 0;
   // Water Data
   List<WaterIntake> _todayWaterList = [];
   int _todayWaterTotal = 0;
@@ -32,6 +39,11 @@ class HealthProvider with ChangeNotifier {
   bool _isLoading = false;
 
   // Getters
+  List<MealRecord> get todayMeals => _todayMeals;
+  int get todayCaloriesIn => _todayCaloriesIn;
+  double get todayProtein => _todayProtein;
+  double get todayCarbs => _todayCarbs;
+  double get todayFat => _todayFat;
   List<WaterIntake> get todayWaterList => _todayWaterList;
   int get todayWaterTotal => _todayWaterTotal;
 
@@ -61,6 +73,12 @@ class HealthProvider with ChangeNotifier {
 
     final userId = _userId!;
 
+    // 0. Meals
+    _todayMeals = await DatabaseHelper.instance.getMealsByDate(userId, _todayStr);
+    _todayCaloriesIn = await DatabaseHelper.instance.getTotalCaloriesByDate(userId, _todayStr);
+    _todayProtein = _todayMeals.fold(0.0, (sum, m) => sum + m.protein);
+    _todayCarbs = _todayMeals.fold(0.0, (sum, m) => sum + m.carbs);
+    _todayFat = _todayMeals.fold(0.0, (sum, m) => sum + m.fat);
     // 1. Water
     _todayWaterList = await DatabaseHelper.instance.getWaterByDate(userId, _todayStr);
     _todayWaterTotal = await DatabaseHelper.instance.getTotalWaterByDate(userId, _todayStr);
@@ -83,6 +101,38 @@ class HealthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ==================== MEAL / NUTRITION ACTIONS ====================
+  Future<void> addMeal({
+    required String name,
+    required String mealType,
+    required int calories,
+    required double protein,
+    required double carbs,
+    required double fat,
+    String? imagePath,
+  }) async {
+    if (_userId == null) return;
+    final now = DateTime.now();
+    final meal = MealRecord(
+      userId: _userId!,
+      name: name,
+      mealType: mealType,
+      calories: calories,
+      protein: protein,
+      carbs: carbs,
+      fat: fat,
+      imagePath: imagePath,
+      date: _todayStr,
+      time: DateFormat('HH:mm').format(now),
+    );
+    await DatabaseHelper.instance.insertMeal(meal);
+    await loadAllData();
+  }
+
+  Future<void> deleteMeal(int id) async {
+    await DatabaseHelper.instance.deleteMeal(id);
+    await loadAllData();
+  }
   // ==================== WATER ACTIONS ====================
   Future<void> addWater(int amount) async {
     if (_userId == null) return;
