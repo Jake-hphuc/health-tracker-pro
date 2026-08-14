@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -29,7 +29,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   Future<Database?> get database async {
-    if (kIsWeb) return null; // Web sử dụng In-Memory fallback
+    if (kIsWeb) return null; // Web sá»­ dá»¥ng In-Memory fallback
     if (_database != null) return _database!;
     _database = await _initDB('health_tracker.db');
     return _database!;
@@ -47,7 +47,7 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // 1. Bảng Users
+    // 1. Báº£ng Users
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +59,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // 2. Bảng Water Intake
+    // 2. Báº£ng Water Intake
     await db.execute('''
       CREATE TABLE water_intake (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,7 +71,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // 3. Bảng Sleep Records
+    // 3. Báº£ng Sleep Records
     await db.execute('''
       CREATE TABLE sleep_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,7 +85,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // 4. Bảng Weight Records
+    // 4. Báº£ng Weight Records
     await db.execute('''
       CREATE TABLE weight_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +97,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // 5. Bảng Activity Records
+    // 5. Báº£ng Activity Records
     await db.execute('''
       CREATE TABLE activity_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,7 +111,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // 6. Bảng User Goals
+    // 6. Báº£ng User Goals
     await db.execute('''
       CREATE TABLE user_goals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -141,6 +141,30 @@ class DatabaseHelper {
     return newUser;
   }
 
+
+  /// Seed admin vao web store neu chua co
+  void seedAdmin(String email, String passwordHash) {
+    if (kIsWeb) {
+      final has = _webUsers.any((u) => u.email.toLowerCase() == email.toLowerCase());
+      if (!has) {
+        _webUsers.insert(0, User(
+          id: 1,
+          name: 'Administrator',
+          email: email,
+          password: passwordHash,
+          height: 170.0,
+          createdAt: DateTime.now().toIso8601String(),
+          isAdmin: true,
+        ));
+        _webUserAutoId = _webUsers.length + 1;
+      }
+    }
+  }
+
+  /// Lay tat ca users (cho admin)
+  List<User> getAllWebUsers() {
+    return List.unmodifiable(_webUsers);
+  }
   Future<User?> getUserByEmail(String email) async {
     if (kIsWeb) {
       try {

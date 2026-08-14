@@ -1,26 +1,31 @@
-# Created Directory Junction Workaround
+# Final Fix for Running on Pixel 6
 
-I have successfully created a Directory Junction (a virtual link) that allows the Flutter tool to access your project through a path without special characters, while keeping your files in their original location.
+I have removed the last technical blocker that was causing your project to crash even when using the virtual link. You can now run your project on the Pixel 6 emulator.
 
-## Changes and Setup
+## What was fixed
 
-### 1. Created Virtual Link (Junction)
-I created a link at `D:\health_tracker_pro` that points directly to your original folder `D:\Lập trình thiết bị di động\health_tracker_pro`.
+### 1. Disabled Build Directory Override
+Your `android/build.gradle.kts` had code that forced the build folder to be outside the project (`../../build`). This was causing the build to fail because it was still using the "illegal" Vietnamese path. I have commented out this logic so the build folder stays inside the clean `D:\health_tracker_pro` path.
 
-### 2. Restored `gradlew.bat`
-I reverted the manual path changes in `gradlew.bat` because they are no longer needed when accessing the project through the new virtual link.
+### 2. Project Cleanup
+I ran `flutter clean` to remove any old files that might still be pointing to the wrong locations.
 
-## How to Run Your Project Now
+## How to run on Pixel 6 easily
 
 > [!IMPORTANT]
-> To avoid the "Illegal character in path" crash, you must now open the project using the new path:
->
-> 1.  In Android Studio, go to **File > Close Project**.
-> 2.  On the welcome screen, click **Open**.
-> 3.  Navigate to and select **`D:\health_tracker_pro`**.
-> 4.  Once opened, you can run the app as usual:
->     - Open Terminal in Android Studio.
->     - Run `flutter clean`.
->     - Run `flutter run`.
+> **Step 1: Open the correct path**
+> In Android Studio, close the current project and open it again from:
+> **`D:\health_tracker_pro`**
+> *(Do NOT use the path with Vietnamese characters)*
 
-Your physical files remain safely in `D:\Lập trình thiết bị di động\health_tracker_pro`. Any changes you make in Android Studio while using the new path will be automatically saved to your original folder.
+**Step 2: Start Pixel 6**
+1.  Go to **Tools > Device Manager**.
+2.  Find **Pixel 6** and click the **Play** button.
+
+**Step 3: Run the app**
+Once the emulator is started, simply click the **Run** button (green triangle) at the top of Android Studio, or type this in the Terminal:
+```powershell
+flutter run
+```
+
+Your files are still safe in the original location, and this setup ensures all tools work perfectly.

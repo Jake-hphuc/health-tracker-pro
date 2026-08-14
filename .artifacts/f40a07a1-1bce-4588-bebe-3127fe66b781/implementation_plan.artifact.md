@@ -1,35 +1,32 @@
-# Workaround for Unicode Path Crash (Keeping Original Folder)
+# Move Project to Clean Path and Create Legacy Link
 
-The crash `Illegal character in path` is a known bug in Flutter's build tool when handling Windows paths with Vietnamese accents. Since you want to keep the physical folder location as it is, we will use a **Directory Junction**.
-
-A Junction is a "virtual link" that creates a second path to the same folder. The physical files stay in `D:\Lập trình thiết bị di động\health_tracker_pro`, but we will access them through a "clean" path like `D:\health_tracker_pro`.
+This plan will physically move your project files to a path without special characters (`D:\health_tracker_pro`) and create a virtual link at your original location so you can still find it where it was.
 
 ## User Review Required
 
-> [!IMPORTANT]
-> **This solution does NOT move your files.** It only creates an "alias" for the folder that the Flutter tools can understand.
+> [!CAUTION]
+> **Files will be physically moved.**
+> While I will create a link at the old location, the actual data will reside in `D:\health_tracker_pro`.
 >
-> I will create a link at `D:\health_tracker_pro`.
-> You will then need to **Open the project from D:\health_tracker_pro** in Android Studio.
+> **Important:** Please ensure Android Studio is closed before I begin the move to prevent file locking errors.
 
 ## Proposed Changes
 
-### Environment Setup
+### File System Operations
 
-#### [NEW] Directory Junction
-I will run a command to link your folder to a clean path:
-`cmd /c mklink /J D:\health_tracker_pro "D:\Lập trình thiết bị di động\health_tracker_pro"`
+1.  **Move Directory:**
+    Move `D:\Lập trình thiết bị di động\health_tracker_pro` to `D:\health_tracker_pro`.
+2.  **Create Junction:**
+    Create a Directory Junction at `D:\Lập trình thiết bị di động\health_tracker_pro` pointing to the new location `D:\health_tracker_pro`.
 
-### Project Configuration
+### Project Cleanup
 
-#### [MODIFY] `gradlew.bat` (file:///D:/Lập trình thiết bị di động/health_tracker_pro/android/gradlew.bat)
-I will revert the manual classpath workaround I added earlier, as it won't be needed once we use the clean path.
+1.  **Clean Build:**
+    Run `flutter clean` in the new location to ensure all cached paths are reset.
 
 ## Verification Plan
 
 ### Manual Verification
-1.  I will create the junction.
-2.  **You** must then:
-    - Close the current project in Android Studio.
-    - Choose **Open** and select `D:\health_tracker_pro`.
-    - Run `flutter run`.
+1.  Verify that `D:\health_tracker_pro` contains all your project files.
+2.  Verify that entering `D:\Lập trình thiết bị di động\health_tracker_pro` still shows your files (via the link).
+3.  Open the project from **`D:\health_tracker_pro`** and run `flutter run`.

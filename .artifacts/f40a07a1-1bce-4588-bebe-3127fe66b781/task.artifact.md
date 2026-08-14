@@ -1,6 +1,6 @@
-- [x] Restore missing Gradle Wrapper files
-    - [x] Run `flutter create .` (initially failed to restore wrapper in special path)
-    - [x] Manually restore `gradlew`, `gradlew.bat`, and `gradle-wrapper.jar`
-    - [x] Apply relative path workaround in `gradlew.bat`
-- [x] Verify build process
-    - [x] Run `flutter build apk --debug` (Gradle starts, but task fails due to path encoding)
+- [x] Fix build directory redirection
+    - [x] Identify problematic lines in `android/build.gradle.kts`
+    - [x] Comment out build directory override
+- [x] Clean and Verify
+    - [x] Run `flutter clean` from clean path
+    - [x] Verify Gradle wrapper files exist

@@ -17,6 +17,7 @@ import 'health_tips_screen.dart';
 import 'rewards_store_screen.dart';
 import 'statistics_screen.dart';
 import 'settings_screen.dart';
+import 'start_workout_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = const [
     _DashboardTab(),
+    StartWorkoutScreen(),
     WaterScreen(),
     SleepScreen(),
     WeightScreen(),
@@ -92,6 +94,7 @@ class _SideRail extends StatelessWidget {
 
   static const _items = [
     (icon: Icons.square_rounded,          label: 'Tổng quan', color: AppColors.appleGreen),
+    (icon: Icons.bolt_rounded,             label: 'Tập luyện', color: AppColors.appleRed),
     (icon: Icons.water_drop_rounded,       label: 'Nước',      color: AppColors.appleBlue),
     (icon: Icons.bedtime_rounded,          label: 'Giấc ngủ', color: AppColors.applePurple),
     (icon: Icons.monitor_weight_rounded,   label: 'Cân nặng', color: AppColors.appleOrange),

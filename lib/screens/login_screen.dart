@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/challenge_provider.dart';
@@ -38,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Award daily login points for registered users
       Provider.of<ChallengeProvider>(context, listen: false).addDailyLoginPoints(10);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -53,6 +52,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
+  }
+
+  void _fillAdminAccount() {
+    _emailController.text = 'admin@healthtracker.app';
+    _passwordController.text = 'Admin@123';
+    _handleLogin();
   }
 
   void _handleGuestLogin() {
@@ -102,26 +107,26 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
           const Text(
             'Đăng Nhập',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 30,
+              fontSize: 28,
               fontWeight: FontWeight.w900,
-              letterSpacing: -1,
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Chào mừng bạn trở lại với Health Tracker Pro',
+          const SizedBox(height: 6),
+          const Text(
+            'Tài khoản tự động lưu, không cần đăng nhập lại',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.label2,
-              fontSize: 14,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 36),
+          const SizedBox(height: 28),
 
           // Email Field
           TextFormField(
@@ -141,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // Password Field
           TextFormField(
@@ -169,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
 
           // Login Button
           ElevatedButton(
@@ -191,7 +196,57 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                   ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
+
+          // Quick Admin Demo Login Button
+          GestureDetector(
+            onTap: authProvider.isLoading ? null : _fillAdminAccount,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF6C47FF).withValues(alpha: 0.15),
+                    const Color(0xFF9B8FFF).withValues(alpha: 0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFF6C47FF).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6C47FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 16),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Đăng nhập nhanh với quyền Admin',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF6C47FF)),
+                        ),
+                        Text(
+                          'admin@healthtracker.app / Admin@123',
+                          style: TextStyle(fontSize: 11, color: AppColors.label2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF6C47FF)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // --- Divider ---
           Row(
@@ -204,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(child: Divider(color: isDark ? AppColors.separator : Colors.grey.shade300)),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // Guest Login Button
           OutlinedButton.icon(
@@ -224,41 +279,15 @@ class _LoginScreenState extends State<LoginScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
 
-          // Guest Info Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.appleBlue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline_rounded, color: AppColors.appleBlue, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Tài khoản tích điểm & đổi quà tặng phòng gym, ăn uống theo mỗi lần đăng nhập.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? AppColors.label2 : Colors.black54,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Register Navigate
+          // Register Navigation Link
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Chưa có tài khoản? ',
-                style: TextStyle(color: AppColors.label2),
+                style: TextStyle(color: AppColors.label2, fontSize: 14),
               ),
               GestureDetector(
                 onTap: () {
@@ -267,10 +296,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
                 child: const Text(
-                  'Đăng ký ngay',
+                  'Đăng Ký Ngay',
                   style: TextStyle(
                     color: AppColors.appleGreen,
                     fontWeight: FontWeight.bold,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -283,19 +313,34 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
-            child: isWide
-                ? Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 440),
-                      child: formContent,
+        child: isWide
+            ? Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: Container(
+                    width: 460,
+                    padding: const EdgeInsets.all(36),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.card1 : Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                  )
-                : formContent,
-          ),
-        ),
+                    child: formContent,
+                  ),
+                ),
+              )
+            : Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  child: formContent,
+                ),
+              ),
       ),
     );
   }
