@@ -1,159 +1,145 @@
-﻿import '../models/meal_record.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../database/database_helper.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../models/water_intake.dart';
 import '../models/sleep_record.dart';
 import '../models/weight_record.dart';
 import '../models/activity_record.dart';
 import '../models/user_goal.dart';
-import '../utils/bmi_calculator.dart';
+import '../models/meal_record.dart';
+import '../database/database_helper.dart';
 
+/// Manages health-related data and state for the application.
+/// 
+/// This provider handles:
+/// - Water intake tracking and goals
+/// - Sleep records and quality
+/// - Weight management and BMI
+/// - Activity/exercise tracking
+/// - Meal/nutrition records
+/// - User health goals
+/// - Weekly charts and visualization data
+/// 
+/// All data is persisted to SQLite database via DatabaseHelper.
 class HealthProvider with ChangeNotifier {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
   int? _userId;
 
-  // Meal / Nutrition Data
-  List<MealRecord> _todayMeals = [];
-  int _todayCaloriesIn = 0;
-  double _todayProtein = 0;
-  double _todayCarbs = 0;
-  double _todayFat = 0;
-  // Water Data
   List<WaterIntake> _todayWaterList = [];
-  int _todayWaterTotal = 0;
-
-  // Sleep Data
   List<SleepRecord> _sleepList = [];
+  List<WeightRecord> _weightList = [];
+  List<ActivityRecord> _activityList = [];
+  List<MealRecord> _todayMealList = [];
+  UserGoal _goal = UserGoal(userId: 0, waterGoal: 2000, sleepGoal: 8.0, activityGoal: 30);
 
-  // Weight Data
-  WeightRecord? _latestWeight;
-  List<WeightRecord> _weightHistory = [];
-
-  // Activity Data
-  List<ActivityRecord> _todayActivities = [];
-  int _todayActivityMinutes = 0;
-
-  // Goal Data
-  UserGoal _goal = UserGoal(userId: 0);
-
-  bool _isLoading = false;
+  // Weekly spots for charts
+  List<FlSpot> _weeklyWaterSpots = [];
+  List<FlSpot> _weeklySleepSpots = [];
+  List<FlSpot> _weeklyActivitySpots = [];
 
   // Getters
-  List<MealRecord> get todayMeals => _todayMeals;
-  int get todayCaloriesIn => _todayCaloriesIn;
-  double get todayProtein => _todayProtein;
-  double get todayCarbs => _todayCarbs;
-  double get todayFat => _todayFat;
   List<WaterIntake> get todayWaterList => _todayWaterList;
-  int get todayWaterTotal => _todayWaterTotal;
-
   List<SleepRecord> get sleepList => _sleepList;
-  SleepRecord? get latestSleep => _sleepList.isNotEmpty ? _sleepList.first : null;
-
-  WeightRecord? get latestWeight => _latestWeight;
-  List<WeightRecord> get weightHistory => _weightHistory;
-
-  List<ActivityRecord> get todayActivities => _todayActivities;
-  int get todayActivityMinutes => _todayActivityMinutes;
-
+  List<WeightRecord> get weightList => _weightList;
+  List<ActivityRecord> get activityList => _activityList;
+  List<MealRecord> get todayMeals => _todayMealList;
   UserGoal get goal => _goal;
-  bool get isLoading => _isLoading;
 
-  String get _todayStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
+  List<FlSpot> get weeklyWaterSpots => _weeklyWaterSpots;
+  List<FlSpot> get weeklySleepSpots => _weeklySleepSpots;
+  List<FlSpot> get weeklyActivitySpots => _weeklyActivitySpots;
 
-  void init(int userId) {
+  int get todayWaterTotal => _todayWaterList.fold(0, (sum, item) => sum + item.amount);
+  int get todayActivityMinutes => _activityList
+      .where((a) => a.date == _todayStr())
+      .fold(0, (sum, item) => sum + item.duration);
+  int get todayCaloriesIn => _todayMealList.fold(0, (sum, item) => sum + item.calories);
+
+  SleepRecord? get latestSleep => _sleepList.isNotEmpty ? _sleepList.first : null;
+  WeightRecord? get latestWeight => _weightList.isNotEmpty ? _weightList.first : null;
+
+  String _todayStr() => DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  Future<void> init(int userId) async {
     _userId = userId;
-    loadAllData();
+    await refreshAll();
   }
 
-  Future<void> loadAllData() async {
+  Future<void> refreshAll() async {
     if (_userId == null) return;
-    _isLoading = true;
-    notifyListeners();
+    final today = _todayStr();
 
-    final userId = _userId!;
+    _todayWaterList = await _db.getWaterIntakesByDate(_userId!, today);
+    _sleepList = await _db.getSleepRecords(_userId!);
+    _weightList = await _db.getWeightRecords(_userId!);
+    _activityList = await _db.getActivityRecords(_userId!);
+    _todayMealList = await _db.getMealsByDate(_userId!, today);
 
-    // 0. Meals
-    _todayMeals = await DatabaseHelper.instance.getMealsByDate(userId, _todayStr);
-    _todayCaloriesIn = await DatabaseHelper.instance.getTotalCaloriesByDate(userId, _todayStr);
-    _todayProtein = _todayMeals.fold(0.0, (sum, m) => sum + m.protein);
-    _todayCarbs = _todayMeals.fold(0.0, (sum, m) => sum + m.carbs);
-    _todayFat = _todayMeals.fold(0.0, (sum, m) => sum + m.fat);
-    // 1. Water
-    _todayWaterList = await DatabaseHelper.instance.getWaterByDate(userId, _todayStr);
-    _todayWaterTotal = await DatabaseHelper.instance.getTotalWaterByDate(userId, _todayStr);
+    final goalFromDb = await _db.getUserGoal(_userId!);
+    if (goalFromDb != null) {
+      _goal = goalFromDb;
+    } else {
+      _goal = UserGoal(userId: _userId!, waterGoal: 2000, sleepGoal: 8.0, activityGoal: 30);
+      await _db.saveUserGoal(_goal);
+    }
 
-    // 2. Sleep
-    _sleepList = await DatabaseHelper.instance.getAllSleepRecords(userId);
-
-    // 3. Weight
-    _latestWeight = await DatabaseHelper.instance.getLatestWeight(userId);
-    _weightHistory = await DatabaseHelper.instance.getAllWeightRecords(userId);
-
-    // 4. Activity
-    _todayActivities = await DatabaseHelper.instance.getActivityByDate(userId, _todayStr);
-    _todayActivityMinutes = await DatabaseHelper.instance.getTotalActivityDurationByDate(userId, _todayStr);
-
-    // 5. Goals
-    _goal = await DatabaseHelper.instance.getGoal(userId);
-
-    _isLoading = false;
+    await _generateWeeklyCharts();
     notifyListeners();
   }
 
-  // ==================== MEAL / NUTRITION ACTIONS ====================
-  Future<void> addMeal({
-    required String name,
-    required String mealType,
-    required int calories,
-    required double protein,
-    required double carbs,
-    required double fat,
-    String? imagePath,
-  }) async {
+  Future<void> _generateWeeklyCharts() async {
     if (_userId == null) return;
     final now = DateTime.now();
-    final meal = MealRecord(
-      userId: _userId!,
-      name: name,
-      mealType: mealType,
-      calories: calories,
-      protein: protein,
-      carbs: carbs,
-      fat: fat,
-      imagePath: imagePath,
-      date: _todayStr,
-      time: DateFormat('HH:mm').format(now),
-    );
-    await DatabaseHelper.instance.insertMeal(meal);
-    await loadAllData();
+    List<FlSpot> waterSpots = [];
+    List<FlSpot> sleepSpots = [];
+    List<FlSpot> actSpots = [];
+
+    for (int i = 6; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final spotX = (6 - i).toDouble();
+
+      final dayWater = await _db.getWaterIntakesByDate(_userId!, dateStr);
+      final totalWater = dayWater.fold(0, (sum, w) => sum + w.amount);
+      waterSpots.add(FlSpot(spotX, totalWater.toDouble()));
+
+      final daySleep = _sleepList.where((s) => s.date == dateStr).toList();
+      final totalSleep = daySleep.isNotEmpty ? daySleep.first.duration : 0.0;
+      sleepSpots.add(FlSpot(spotX, totalSleep));
+
+      final dayAct = _activityList.where((a) => a.date == dateStr).toList();
+      final totalAct = dayAct.fold(0, (sum, a) => sum + a.duration);
+      actSpots.add(FlSpot(spotX, totalAct.toDouble()));
+    }
+
+    _weeklyWaterSpots = waterSpots;
+    _weeklySleepSpots = sleepSpots;
+    _weeklyActivitySpots = actSpots;
   }
 
-  Future<void> deleteMeal(int id) async {
-    await DatabaseHelper.instance.deleteMeal(id);
-    await loadAllData();
-  }
-  // ==================== WATER ACTIONS ====================
   Future<void> addWater(int amount) async {
     if (_userId == null) return;
     final now = DateTime.now();
+    final timeStr = DateFormat('HH:mm').format(now);
+    final dateStr = DateFormat('yyyy-MM-dd').format(now);
+
     final water = WaterIntake(
       userId: _userId!,
       amount: amount,
-      date: _todayStr,
-      time: DateFormat('HH:mm').format(now),
+      time: timeStr,
+      date: dateStr,
     );
 
-    await DatabaseHelper.instance.insertWater(water);
-    await loadAllData();
+    await _db.insertWaterIntake(water);
+    await refreshAll();
   }
 
   Future<void> deleteWater(int id) async {
-    await DatabaseHelper.instance.deleteWater(id);
-    await loadAllData();
+    await _db.deleteWaterIntake(id);
+    await refreshAll();
   }
 
-  // ==================== SLEEP ACTIONS ====================
   Future<void> addSleep({
     required String sleepTime,
     required String wakeTime,
@@ -161,74 +147,109 @@ class HealthProvider with ChangeNotifier {
     required String quality,
   }) async {
     if (_userId == null) return;
+    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     final sleep = SleepRecord(
       userId: _userId!,
       sleepTime: sleepTime,
       wakeTime: wakeTime,
       duration: duration,
       quality: quality,
-      date: _todayStr,
+      date: dateStr,
     );
 
-    await DatabaseHelper.instance.insertSleep(sleep);
-    await loadAllData();
+    await _db.insertSleepRecord(sleep);
+    await refreshAll();
   }
 
-  // ==================== WEIGHT ACTIONS ====================
-  Future<void> addWeight(double weightKg, double heightCm) async {
+  Future<void> addWeight(double weight, double heightCm) async {
     if (_userId == null) return;
-    final bmi = BMICalculator.calculate(weightKg, heightCm);
-    final weightRecord = WeightRecord(
+    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final heightM = heightCm / 100.0;
+    final bmi = weight / (heightM * heightM);
+
+    final w = WeightRecord(
       userId: _userId!,
-      weight: weightKg,
+      weight: weight,
       bmi: bmi,
-      date: _todayStr,
+      date: dateStr,
     );
 
-    await DatabaseHelper.instance.insertWeight(weightRecord);
-    await loadAllData();
+    await _db.insertWeightRecord(w);
+    await refreshAll();
   }
 
-  // ==================== ACTIVITY ACTIONS ====================
   Future<void> addActivity({
     required String type,
-    required int durationMinutes,
-    required double distanceKm,
+    required int duration,
+    required double calories,
   }) async {
     if (_userId == null) return;
-    final calories = BMICalculator.estimateCalories(type, durationMinutes);
-    final activity = ActivityRecord(
+    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    final act = ActivityRecord(
       userId: _userId!,
       type: type,
-      duration: durationMinutes,
-      distance: distanceKm,
+      duration: duration,
       calories: calories,
-      date: _todayStr,
+      date: dateStr,
     );
 
-    await DatabaseHelper.instance.insertActivity(activity);
-    await loadAllData();
+    await _db.insertActivityRecord(act);
+    await refreshAll();
   }
 
-  // ==================== GOAL ACTIONS ====================
-  Future<void> updateGoal({
-    int? waterGoal,
-    double? sleepGoal,
-    double? weightGoal,
-    int? activityGoal,
+  Future<void> deleteActivity(int id) async {
+    await _db.deleteActivityRecord(id);
+    await refreshAll();
+  }
+
+  Future<void> addMeal({
+    required String name,
+    required int calories,
+    required double protein,
+    required double carbs,
+    required double fat,
+    required String mealType,
+    required String photoEmoji,
   }) async {
     if (_userId == null) return;
+    final now = DateTime.now();
+    final timeStr = DateFormat('HH:mm').format(now);
+    final dateStr = DateFormat('yyyy-MM-dd').format(now);
 
-    final updatedGoal = UserGoal(
+    final meal = MealRecord(
       userId: _userId!,
-      waterGoal: waterGoal ?? _goal.waterGoal,
-      sleepGoal: sleepGoal ?? _goal.sleepGoal,
-      weightGoal: weightGoal ?? _goal.weightGoal,
-      activityGoal: activityGoal ?? _goal.activityGoal,
+      name: name,
+      calories: calories,
+      protein: protein,
+      carbs: carbs,
+      fat: fat,
+      mealType: mealType,
+      photoEmoji: photoEmoji,
+      time: timeStr,
+      date: dateStr,
     );
 
-    await DatabaseHelper.instance.updateGoal(updatedGoal);
-    await loadAllData();
+    await _db.insertMealRecord(meal);
+    await refreshAll();
+  }
+
+  Future<void> deleteMeal(int id) async {
+    await _db.deleteMealRecord(id);
+    await refreshAll();
+  }
+
+  Future<void> updateGoals({int? water, double? sleep, int? activity}) async {
+    if (_userId == null) return;
+    _goal = UserGoal(
+      id: _goal.id,
+      userId: _userId!,
+      waterGoal: water ?? _goal.waterGoal,
+      sleepGoal: sleep ?? _goal.sleepGoal,
+      activityGoal: activity ?? _goal.activityGoal,
+    );
+    await _db.saveUserGoal(_goal);
+    notifyListeners();
   }
 }
-

@@ -10,6 +10,13 @@ import 'providers/challenge_provider.dart';
 import 'screens/splash_screen.dart';
 import 'utils/constants.dart';
 
+/// Entry point of the Health Tracker Pro application.
+/// 
+/// Initializes:
+/// - Flutter bindings
+/// - Vietnamese date formatting
+/// - System UI overlay style
+/// - Provider state management
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../providers/auth_provider.dart';
+import '../models/user.dart';
 import '../utils/constants.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -12,264 +14,165 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabCtrl;
-  List<dynamic> _users = [];
-  bool _loading = true;
-
-  static const _adData = [
-    {'month': 'Tháng 3', 'revenue': 4200000, 'impressions': 128000, 'ctr': 3.2},
-    {'month': 'Tháng 4', 'revenue': 5800000, 'impressions': 176000, 'ctr': 3.8},
-    {'month': 'Tháng 5', 'revenue': 6100000, 'impressions': 195000, 'ctr': 4.1},
-    {'month': 'Tháng 6', 'revenue': 7400000, 'impressions': 220000, 'ctr': 4.5},
-    {'month': 'Tháng 7', 'revenue': 9200000, 'impressions': 265000, 'ctr': 4.9},
-    {'month': 'Tháng 8', 'revenue': 11500000, 'impressions': 312000, 'ctr': 5.3},
-  ];
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    final users = await Provider.of<AuthProvider>(context, listen: false)
-        .getAllRegisteredUsers();
-    setState(() {
-      _users = users;
-      _loading = false;
-    });
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabCtrl.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = dark ? AppColors.blackBg : AppColors.lightBg;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isWide = AppConstants.isWide(context);
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
       appBar: AppBar(
-        title: const Text(
-          'Bảng Quản Trị Hệ Thống',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        title: const Row(
+          children: [
+            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF6C47FF)),
+            SizedBox(width: 8),
+            Text(
+              'Bảng Điều Khiển Quản Trị',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+          ],
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: const Color(0xFF6C47FF),
+          unselectedLabelColor: AppColors.label2,
+          indicatorColor: const Color(0xFF6C47FF),
+          indicatorWeight: 3,
+          tabs: const [
+            Tab(icon: Icon(Icons.people_alt_rounded), text: 'Người Dùng'),
+            Tab(icon: Icon(Icons.monetization_on_rounded), text: 'Doanh Thu QC'),
+            Tab(icon: Icon(Icons.analytics_rounded), text: 'Chỉ Số KPI'),
+          ],
+        ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // KPI Summary Row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  _Kpi(
-                    'Người dùng',
-                    '${_users.length + 1}',
-                    Icons.people_rounded,
-                    AppColors.appleBlue,
-                    '+${_users.length} mới',
-                  ),
-                  const SizedBox(width: 10),
-                  const _Kpi(
-                    'Hoạt động hôm nay',
-                    '847',
-                    Icons.trending_up_rounded,
-                    AppColors.appleGreen,
-                    '+12% tuần này',
-                  ),
-                  const SizedBox(width: 10),
-                  const _Kpi(
-                    'Doanh thu Tháng 8',
-                    '11.5M',
-                    Icons.attach_money_rounded,
-                    AppColors.appleOrange,
-                    '+25% so với T7',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Tab Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: dark ? AppColors.card2 : const Color(0xFFE5E5EA),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: TabBar(
-                  controller: _tabCtrl,
-                  indicator: BoxDecoration(
-                    color: const Color(0xFF6C47FF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: AppColors.label2,
-                  labelStyle: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700),
-                  tabs: const [
-                    Tab(text: 'Người dùng'),
-                    Tab(text: 'Doanh thu & QC'),
-                    Tab(text: 'Chỉ số KPI'),
+      body: isWide
+          ? Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _UsersTab(users: authProvider.allRegisteredUsers),
+                    const _RevenueTab(),
+                    const _KpiTab(),
                   ],
                 ),
               ),
+            )
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _UsersTab(users: authProvider.allRegisteredUsers),
+                const _RevenueTab(),
+                const _KpiTab(),
+              ],
             ),
-            const SizedBox(height: 12),
-
-            Expanded(
-              child: TabBarView(
-                controller: _tabCtrl,
-                children: [
-                  _UsersTab(_users, _loading, _load),
-                  const _AdsTab(_adData),
-                  _StatsTab(_users.length + 1),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Kpi extends StatelessWidget {
-  final String label, value, sub;
-  final IconData icon;
-  final Color color;
-  const _Kpi(this.label, this.value, this.icon, this.color, this.sub);
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: dark ? AppColors.card1 : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.12),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: color,
-              ),
-            ),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 10, color: AppColors.label2),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              sub,
-              style: const TextStyle(
-                fontSize: 9,
-                color: AppColors.appleGreen,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
 
 class _UsersTab extends StatelessWidget {
-  final List<dynamic> users;
-  final bool loading;
-  final VoidCallback refresh;
-  const _UsersTab(this.users, this.loading, this.refresh);
+  final List<User> users;
+  const _UsersTab({required this.users});
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    if (loading) {
-      return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6C47FF)));
-    }
-
-    final rows = <Map<String, dynamic>>[
-      {
-        'n': 'Quản Trị Viên (Admin)',
-        'e': 'admin@healthtracker.app',
-        'admin': true,
-        'role': 'Toàn quyền',
-      },
-      for (final u in users)
-        {
-          'n': (u as dynamic).name as String,
-          'e': u.email as String,
-          'admin': false,
-          'role': 'Thành viên',
-        },
-    ];
-
-    return RefreshIndicator(
-      onRefresh: () async => refresh(),
-      color: const Color(0xFF6C47FF),
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-        itemCount: rows.length,
-        itemBuilder: (ctx, i) {
-          final u = rows[i];
-          final isA = u['admin'] as bool;
-          final col = isA ? const Color(0xFF6C47FF) : AppColors.appleBlue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tổng số tài khoản: ${users.length}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6C47FF).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.verified_user_rounded,
+                      size: 14, color: Color(0xFF6C47FF)),
+                  SizedBox(width: 4),
+                  Text('Đã xác thực',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6C47FF))),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        ...users.map((u) {
           return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: dark ? AppColors.card1 : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: isA
-                  ? Border.all(color: col.withValues(alpha: 0.4))
+              color: isDark ? AppColors.card1 : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: u.isAdmin
+                  ? Border.all(
+                      color: const Color(0xFF6C47FF).withValues(alpha: 0.4),
+                      width: 1.5)
                   : null,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: col.withValues(alpha: 0.15),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: u.isAdmin
+                        ? const Color(0xFF6C47FF).withValues(alpha: 0.15)
+                        : AppColors.appleBlue.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
                   child: Text(
-                    (u['n'] as String)[0].toUpperCase(),
+                    u.name.isNotEmpty ? u.name[0].toUpperCase() : 'U',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: col,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: u.isAdmin
+                          ? const Color(0xFF6C47FF)
+                          : AppColors.appleBlue,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,237 +180,315 @@ class _UsersTab extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            u['n'] as String,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: dark ? Colors.white : Colors.black87,
-                            ),
+                            u.name,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold),
                           ),
-                          if (isA) ...[
+                          if (u.isAdmin) ...[
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: col,
+                                color: const Color(0xFF6C47FF),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Text(
                                 'ADMIN',
                                 style: TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white),
                               ),
                             ),
                           ],
                         ],
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        u['e'] as String,
+                        u.email,
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.label2),
+                      ),
+                      Text(
+                        'Chiều cao: ${u.height.toInt()} cm',
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.label3),
                       ),
                     ],
                   ),
                 ),
-                Icon(
-                  isA ? Icons.shield_rounded : Icons.person_rounded,
-                  color: isA ? col : AppColors.label3,
-                  size: 18,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.appleGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Hoạt động',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.appleGreen),
+                  ),
                 ),
               ],
             ),
           );
-        },
-      ),
+        }),
+      ],
     );
   }
 }
 
-class _AdsTab extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-  const _AdsTab(this.data);
-
-  String _f(int n) => n >= 1000000
-      ? '${(n / 1000000).toStringAsFixed(1)}M'
-      : n >= 1000
-          ? '${(n / 1000).toStringAsFixed(0)}K'
-          : '$n';
+class _RevenueTab extends StatelessWidget {
+  const _RevenueTab();
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final maxR = data
-        .map((d) => d['revenue'] as int)
-        .reduce((a, b) => a > b ? a : b);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.card1 : Colors.white;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const _RC('Tổng doanh thu', '44.200.000 đ',
-                  AppColors.appleGreen, Icons.attach_money_rounded),
-              const SizedBox(width: 10),
-              const _RC('Lượt hiển thị', '1.300.000', AppColors.appleBlue,
-                  Icons.visibility_rounded),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const _RC('CTR trung bình', '4.3%', AppColors.appleOrange,
-                  Icons.ads_click_rounded),
-              const SizedBox(width: 10),
-              const _RC('CPM trung bình', '33.800 đ', AppColors.applePurple,
-                  Icons.price_check_rounded),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Biểu đồ tăng trưởng doanh thu (VNĐ)',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: dark ? Colors.white : Colors.black87,
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Row(
+          children: [
+            _StatBox(
+              title: 'Doanh Thu Tháng',
+              value: '14.850.000 đ',
+              delta: '+18.4%',
+              color: AppColors.appleGreen,
+              cardBg: cardBg,
             ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: dark ? AppColors.card1 : Colors.white,
-              borderRadius: BorderRadius.circular(20),
+            const SizedBox(width: 12),
+            _StatBox(
+              title: 'Lượt Xem QC',
+              value: '124.500',
+              delta: '+24.1%',
+              color: AppColors.appleBlue,
+              cardBg: cardBg,
             ),
-            child: Column(
-              children: data.map((d) {
-                final pct = (d['revenue'] as int) / maxR;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 52,
-                        child: Text(
-                          d['month'] as String,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.label2,
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _StatBox(
+              title: 'eCPM Trung Bình',
+              value: '119.200 đ',
+              delta: '+5.2%',
+              color: AppColors.applePurple,
+              cardBg: cardBg,
+            ),
+            const SizedBox(width: 12),
+            _StatBox(
+              title: 'Tỉ Lệ Click (CTR)',
+              value: '3.42%',
+              delta: '+0.8%',
+              color: AppColors.appleOrange,
+              cardBg: cardBg,
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Biểu Đồ Doanh Thu Quảng Cáo (Triệu VNĐ)',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 180,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: 20,
+                    barTouchData: BarTouchData(enabled: true),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 28,
+                          getTitlesWidget: (v, m) => Text(
+                            '${v.toInt()}tr',
+                            style: const TextStyle(
+                                fontSize: 9, color: AppColors.label3),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: dark
-                                    ? AppColors.card2
-                                    : const Color(0xFFF2F2F7),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            FractionallySizedBox(
-                              widthFactor: pct,
-                              child: Container(
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF6C47FF),
-                                      Color(0xFF9B8FFF)
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ],
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (v, m) {
+                            const months = [
+                              'T3',
+                              'T4',
+                              'T5',
+                              'T6',
+                              'T7',
+                              'T8'
+                            ];
+                            final idx = v.toInt();
+                            if (idx >= 0 && idx < months.length) {
+                              return Text(months[idx],
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.label2));
+                            }
+                            return const Text('');
+                          },
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 62,
-                        child: Text(
-                          '${_f(d['revenue'] as int)} đ',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF6C47FF),
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
+                    ),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    barGroups: [
+                      _makeBar(0, 6.2, const Color(0xFF6C47FF)),
+                      _makeBar(1, 8.4, const Color(0xFF6C47FF)),
+                      _makeBar(2, 9.8, const Color(0xFF6C47FF)),
+                      _makeBar(3, 11.5, const Color(0xFF6C47FF)),
+                      _makeBar(4, 13.2, const Color(0xFF6C47FF)),
+                      _makeBar(5, 14.85, AppColors.appleGreen),
                     ],
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  BarChartGroupData _makeBar(int x, double y, Color color) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: y,
+          color: color,
+          width: 22,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+        ),
+      ],
     );
   }
 }
 
-class _RC extends StatelessWidget {
-  final String label, value;
-  final Color color;
-  final IconData icon;
-  const _RC(this.label, this.value, this.color, this.icon);
+class _KpiTab extends StatelessWidget {
+  const _KpiTab();
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.card1 : Colors.white;
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Chỉ Số Tăng Trưởng Ứng Dụng (KPI)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              _KpiRow(
+                label: 'Tỷ Lệ Giữ Chân Ngày 7 (Retention D7)',
+                value: '68.5%',
+                progress: 0.685,
+                color: AppColors.appleGreen,
+              ),
+              const SizedBox(height: 14),
+              _KpiRow(
+                label: 'Người Dùng Hoạt Động Hàng Ngày (DAU)',
+                value: '4.280',
+                progress: 0.82,
+                color: AppColors.appleBlue,
+              ),
+              const SizedBox(height: 14),
+              _KpiRow(
+                label: 'Thời Gian Sử Dụng Trung Bình / Phiên',
+                value: '14.5 phút',
+                progress: 0.72,
+                color: AppColors.applePurple,
+              ),
+              const SizedBox(height: 14),
+              _KpiRow(
+                label: 'Tỉ Lệ Đăng Ký Tài Khoản Mới',
+                value: '91.2%',
+                progress: 0.912,
+                color: AppColors.appleOrange,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String title;
+  final String value;
+  final String delta;
+  final Color color;
+  final Color cardBg;
+
+  const _StatBox({
+    required this.title,
+    required this.value,
+    required this.delta,
+    required this.color,
+    required this.cardBg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: dark ? AppColors.card1 : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 16),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
+            Text(title,
+                style: const TextStyle(fontSize: 11, color: AppColors.label2)),
+            const SizedBox(height: 6),
+            Text(value,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.arrow_upward_rounded, size: 12, color: color),
+                const SizedBox(width: 2),
+                Text(delta,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      color: color,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.label2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                        fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+              ],
             ),
           ],
         ),
@@ -516,84 +497,42 @@ class _RC extends StatelessWidget {
   }
 }
 
-class _StatsTab extends StatelessWidget {
-  final int total;
-  const _StatsTab(this.total);
+class _KpiRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final double progress;
+  final Color color;
+
+  const _KpiRow({
+    required this.label,
+    required this.value,
+    required this.progress,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final rows = [
-      ('Tỷ lệ giữ chân người dùng (30 ngày)', '78.5%', AppColors.appleGreen,
-          Icons.people_outline_rounded),
-      ('Số phiên trung bình / người / ngày', '4.2 phiên', AppColors.appleBlue,
-          Icons.timer_outlined),
-      ('Thời gian sử dụng trung bình', '18.4 phút', AppColors.applePurple,
-          Icons.access_time_rounded),
-      ('Tỷ lệ chuyển đổi thành viên mới', '34.2%', AppColors.appleOrange,
-          Icons.person_add_outlined),
-      ('Người dùng hoạt động mỗi ngày (DAU)', '847 người', AppColors.appleRed,
-          Icons.bar_chart_rounded),
-      ('Tổng số phiên luyện tập hoàn thành', '42.810 phiên',
-          AppColors.appleTeal, Icons.analytics_outlined),
-      ('Điểm đánh giá trung bình từ App Store', '4.8 ★ / 5.0',
-          AppColors.appleYellow, Icons.star_outline_rounded),
-      ('Số chiến dịch tài trợ & quảng cáo', '6 chiến dịch',
-          const Color(0xFF6C47FF), Icons.campaign_outlined),
-    ];
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-      itemCount: rows.length,
-      itemBuilder: (ctx, i) {
-        final (label, value, color, icon) = rows[i];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: dark ? AppColors.card1 : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 13, color: AppColors.label2)),
+            Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: AppColors.separator.withValues(alpha: 0.3),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 6,
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: dark ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+        ),
+      ],
     );
   }
 }

@@ -11,185 +11,168 @@ class GoalsScreen extends StatefulWidget {
 }
 
 class _GoalsScreenState extends State<GoalsScreen> {
-  final _waterGoalController = TextEditingController();
-  final _sleepGoalController = TextEditingController();
-  final _activityGoalController = TextEditingController();
+  late TextEditingController _waterController;
+  late TextEditingController _sleepController;
+  late TextEditingController _activityController;
 
   @override
   void initState() {
     super.initState();
     final health = Provider.of<HealthProvider>(context, listen: false);
-    _waterGoalController.text = health.goal.waterGoal.toString();
-    _sleepGoalController.text = health.goal.sleepGoal.toString();
-    _activityGoalController.text = health.goal.activityGoal.toString();
+    _waterController = TextEditingController(text: health.goal.waterGoal.toString());
+    _sleepController = TextEditingController(text: health.goal.sleepGoal.toString());
+    _activityController = TextEditingController(text: health.goal.activityGoal.toString());
   }
 
   @override
   void dispose() {
-    _waterGoalController.dispose();
-    _sleepGoalController.dispose();
-    _activityGoalController.dispose();
+    _waterController.dispose();
+    _sleepController.dispose();
+    _activityController.dispose();
     super.dispose();
   }
 
-  void _saveGoals() {
-    final water = int.tryParse(_waterGoalController.text.trim()) ?? 2000;
-    final sleep = double.tryParse(_sleepGoalController.text.trim()) ?? 8.0;
-    final activity = int.tryParse(_activityGoalController.text.trim()) ?? 30;
+  void _save() {
+    final w = int.tryParse(_waterController.text.trim()) ?? 2000;
+    final s = double.tryParse(_sleepController.text.trim()) ?? 8.0;
+    final a = int.tryParse(_activityController.text.trim()) ?? 30;
 
-    final health = Provider.of<HealthProvider>(context, listen: false);
-    health.updateGoal(
-      waterGoal: water,
-      sleepGoal: sleep,
-      activityGoal: activity,
+    Provider.of<HealthProvider>(context, listen: false).updateGoals(
+      water: w,
+      sleep: s,
+      activity: a,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đã cập nhật mục tiêu sức khỏe cá nhân! 🎯'),
+        content: const Text('Đã cập nhật mục tiêu hàng ngày! 🎯'),
         backgroundColor: AppColors.appleGreen,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isWide = AppConstants.isWide(context);
     final cardBg = isDark ? AppColors.card1 : Colors.white;
-
-    Widget body = SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Đặt mục tiêu hàng ngày',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Tùy chỉnh các chỉ số phù hợp với thể trạng của bạn',
-                  style: TextStyle(fontSize: 13, color: AppColors.label2),
-                ),
-                const SizedBox(height: 28),
-
-                // Water Goal
-                _buildGoalField(
-                  controller: _waterGoalController,
-                  label: 'Mục tiêu Nước (ml)',
-                  icon: Icons.water_drop_rounded,
-                  color: AppColors.appleBlue,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 18),
-
-                // Sleep Goal
-                _buildGoalField(
-                  controller: _sleepGoalController,
-                  label: 'Mục tiêu Giấc ngủ (Giờ)',
-                  icon: Icons.bedtime_rounded,
-                  color: AppColors.applePurple,
-                  isDark: isDark,
-                  isDecimal: true,
-                ),
-                const SizedBox(height: 18),
-
-                // Activity Goal
-                _buildGoalField(
-                  controller: _activityGoalController,
-                  label: 'Mục tiêu Vận động (Phút)',
-                  icon: Icons.directions_run_rounded,
-                  color: AppColors.appleRed,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 28),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saveGoals,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.appleGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text(
-                      'LƯU MỤC TIÊU CÁ NHÂN',
-                      style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
       appBar: AppBar(
-        title: const Text('Thiết lập Mục tiêu 🎯'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
+        title: const Text('Mục Tiêu Hàng Ngày', style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: isWide
-          ? Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: body,
-              ),
-            )
-          : body,
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              children: [
+                _GoalField(
+                  controller: _waterController,
+                  label: 'Mục tiêu nước uống',
+                  suffix: 'ml',
+                  icon: Icons.water_drop_rounded,
+                  color: AppColors.appleBlue,
+                  keyboardType: TextInputType.number,
+                ),
+                const Divider(height: 24),
+                _GoalField(
+                  controller: _sleepController,
+                  label: 'Mục tiêu giấc ngủ',
+                  suffix: 'giờ',
+                  icon: Icons.bedtime_rounded,
+                  color: AppColors.applePurple,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+                const Divider(height: 24),
+                _GoalField(
+                  controller: _activityController,
+                  label: 'Mục tiêu vận động',
+                  suffix: 'phút',
+                  icon: Icons.directions_run_rounded,
+                  color: AppColors.appleRed,
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _save,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.appleGreen,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text('LƯU MỤC TIÊU',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+          ),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildGoalField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-    bool isDecimal = false,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: color, size: 20),
-        filled: true,
-        fillColor: isDark ? AppColors.card2 : const Color(0xFFF2F2F7),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
+class _GoalField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String suffix;
+  final IconData icon;
+  final Color color;
+  final TextInputType keyboardType;
+
+  const _GoalField({
+    required this.controller,
+    required this.label,
+    required this.suffix,
+    required this.icon,
+    required this.color,
+    required this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 20),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: color, width: 1.5),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         ),
-        labelStyle: const TextStyle(color: AppColors.label2),
-      ),
+        SizedBox(
+          width: 90,
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            textAlign: TextAlign.end,
+            decoration: InputDecoration(
+              suffixText: suffix,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
@@ -19,6 +19,7 @@ import 'statistics_screen.dart';
 import 'settings_screen.dart';
 import 'start_workout_screen.dart';
 import 'meal_scanner_screen.dart';
+import 'project_intro_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -99,18 +100,18 @@ class _SideRail extends StatelessWidget {
   const _SideRail({required this.currentIndex, required this.onTap});
 
   static const _items = [
-    (icon: Icons.square_rounded,          label: 'Tá»•ng quan', color: AppColors.appleGreen),
-    (icon: Icons.restaurant_rounded,       label: 'Ä‚n uá»‘ng',   color: AppColors.appleOrange),
-    (icon: Icons.bolt_rounded,             label: 'Táº­p luyá»‡n', color: AppColors.appleRed),
-    (icon: Icons.water_drop_rounded,       label: 'NÆ°á»›c',      color: AppColors.appleBlue),
-    (icon: Icons.bedtime_rounded,          label: 'Giáº¥c ngá»§', color: AppColors.applePurple),
-    (icon: Icons.monitor_weight_rounded,   label: 'CĂ¢n náº·ng', color: AppColors.appleOrange),
-    (icon: Icons.directions_run_rounded,   label: 'Váº­n Ä‘á»™ng', color: AppColors.appleRed),
-    (icon: Icons.emoji_events_rounded,     label: 'Thá»­ thĂ¡ch', color: AppColors.appleYellow),
-    (icon: Icons.stars_rounded,            label: 'KOLs',     color: AppColors.appleGreen),
-    (icon: Icons.lightbulb_rounded,        label: 'Máº¹o hay',   color: AppColors.appleTeal),
-    (icon: Icons.card_giftcard_rounded,    label: 'Äá»•i QuĂ ',  color: AppColors.appleRed),
-    (icon: Icons.bar_chart_rounded,        label: 'Thá»‘ng kĂª', color: AppColors.appleTeal),
+    (icon: Icons.dashboard_rounded,      label: 'Tổng quan', color: AppColors.appleGreen),
+    (icon: Icons.restaurant_rounded,     label: 'Ăn uống',   color: AppColors.appleOrange),
+    (icon: Icons.bolt_rounded,           label: 'Tập luyện', color: AppColors.appleRed),
+    (icon: Icons.water_drop_rounded,     label: 'Nước uống', color: AppColors.appleBlue),
+    (icon: Icons.bedtime_rounded,        label: 'Giấc ngủ', color: AppColors.applePurple),
+    (icon: Icons.monitor_weight_rounded, label: 'Cân nặng', color: AppColors.appleOrange),
+    (icon: Icons.directions_run_rounded, label: 'Vận động', color: AppColors.appleRed),
+    (icon: Icons.emoji_events_rounded,   label: 'Thử thách', color: AppColors.appleYellow),
+    (icon: Icons.stars_rounded,          label: 'KOLs',     color: AppColors.appleGreen),
+    (icon: Icons.lightbulb_rounded,      label: 'Mẹo hay',  color: AppColors.appleTeal),
+    (icon: Icons.card_giftcard_rounded,  label: 'Đổi Quà',  color: AppColors.appleRed),
+    (icon: Icons.bar_chart_rounded,      label: 'Thống kê', color: AppColors.appleTeal),
   ];
 
   @override
@@ -230,31 +231,143 @@ class _DashboardTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'ChĂ o, ${auth.currentUser?.name ?? 'Báº¡n'} đŸ‘‹',
+                          'Chào, ${auth.currentUser?.name ?? 'Bạn'} 👋',
                           style: const TextStyle(
-                            fontSize: 26,
+                            fontSize: 24,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
                           ),
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.card2 : Colors.white,
-                          shape: BoxShape.circle,
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Thông tin Đề tài & Nhóm',
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.appleGreen.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.groups_rounded,
+                              size: 22,
+                              color: AppColors.appleGreen,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ProjectIntroScreen(),
+                              ),
+                            );
+                          },
                         ),
-                        child: const Icon(Icons.settings_outlined, size: 22),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                        );
-                      },
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.card2 : Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.settings_outlined, size: 22),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
+                ),
+              ),
+            ),
+
+            // Project Info Banner Card
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 12, isWide ? 28 : 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProjectIntroScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [
+                                const Color(0xFF1E3A8A).withValues(alpha: 0.6),
+                                const Color(0xFF065F46).withValues(alpha: 0.6),
+                              ]
+                            : [
+                                const Color(0xFFE0F2FE),
+                                const Color(0xFFDCFCE7),
+                              ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.appleGreen.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.appleGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.school_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ĐỀ TÀI: THEO DÕI SỨC KHỎE – HEALTH TRACKER',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Nhóm: Hoàng Phúc (23150096) • Nhật Minh (23150210) • Minh Thuận (23150056)',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: AppColors.label2,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 12,
+                          color: AppColors.label2,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -295,19 +408,19 @@ class _DashboardTab extends StatelessWidget {
                           children: [
                             _RingLegend(
                               color: AppColors.appleRed,
-                              label: 'DI CHUYá»‚N',
+                              label: 'DI CHUYỂN',
                               value: '$moveCalories / 500 kcal',
                             ),
                             const SizedBox(height: 12),
                             _RingLegend(
                               color: AppColors.appleGreen,
-                              label: 'Táº¬P LUYá»†N',
-                              value: '${health.todayActivityMinutes} / 30 PHĂT',
+                              label: 'TẬP LUYỆN',
+                              value: '${health.todayActivityMinutes} / 30 PHÚT',
                             ),
                             const SizedBox(height: 12),
                             _RingLegend(
                               color: AppColors.appleBlue,
-                              label: 'Uá»NG NÆ¯á»C',
+                              label: 'UỐNG NƯỚC',
                               value: '${health.todayWaterTotal} / 2000 ML',
                             ),
                           ],
@@ -328,27 +441,27 @@ class _DashboardTab extends StatelessWidget {
                 mainAxisSpacing: 14,
                 children: [
                   MetricCard(
-                    title: 'Náº¡p Calo',
+                    title: 'Nạp Calo',
                     value: '${health.todayCaloriesIn}',
                     unit: 'kcal',
                     icon: Icons.restaurant_rounded,
                     accentColor: AppColors.appleOrange,
                     progress: (health.todayCaloriesIn / 2000).clamp(0.0, 1.0),
-                    subtitle: '${health.todayMeals.length} bá»¯a Äƒn hĂ´m nay',
+                    subtitle: '${health.todayMeals.length} bữa ăn hôm nay',
                     onTap: () {},
                   ),
                   MetricCard(
-                    title: 'NÆ°á»›c uá»‘ng',
+                    title: 'Nước uống',
                     value: '${health.todayWaterTotal}',
                     unit: 'ml',
                     icon: Icons.water_drop_rounded,
                     accentColor: AppColors.appleBlue,
                     progress: (health.todayWaterTotal / 2000).clamp(0.0, 1.0),
-                    subtitle: 'Má»¥c tiĂªu: 2,000 ml',
+                    subtitle: 'Mục tiêu: 2.000 ml',
                     onTap: () {},
                   ),
                   MetricCard(
-                    title: 'Giáº¥c ngá»§',
+                    title: 'Giấc ngủ',
                     value: health.latestSleep != null
                         ? '${health.latestSleep!.duration ~/ 60}h ${health.latestSleep!.duration % 60}m'
                         : '--',
@@ -356,11 +469,11 @@ class _DashboardTab extends StatelessWidget {
                     icon: Icons.bedtime_rounded,
                     accentColor: AppColors.applePurple,
                     progress: health.latestSleep != null ? (health.latestSleep!.duration / 480).clamp(0.0, 1.0) : 0.0,
-                    subtitle: health.latestSleep?.quality ?? 'ChÆ°a ghi nháº­n',
+                    subtitle: health.latestSleep?.quality ?? 'Chưa ghi nhận',
                     onTap: () {},
                   ),
                   MetricCard(
-                    title: 'CĂ¢n náº·ng',
+                    title: 'Cân nặng',
                     value: health.latestWeight != null
                         ? '${health.latestWeight!.weight}'
                         : '--',
@@ -370,7 +483,7 @@ class _DashboardTab extends StatelessWidget {
                     progress: 0.7,
                     subtitle: health.latestWeight != null
                         ? 'BMI: ${health.latestWeight!.bmi.toStringAsFixed(1)}'
-                        : 'ChÆ°a Ä‘o',
+                        : 'Chưa ghi nhận',
                     onTap: () {},
                   ),
                 ],

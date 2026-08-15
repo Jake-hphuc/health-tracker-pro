@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-// ============================================================
-// Apple-style Design System
-// ============================================================
 class AppColors {
   // === Apple Core Colors ===
   static const Color appleRed    = Color(0xFFFF375F);   // Activity / Move ring
@@ -34,87 +31,64 @@ class AppColors {
   static const List<Color> purpleRing = [Color(0xFFBF5AF2), Color(0xFFDA8FFF)];
   static const List<Color> orangeRing = [Color(0xFFFF9F0A), Color(0xFFFFCC02)];
 
-  // Legacy aliases for backward compatibility
-  static const Color primaryGreen  = appleGreen;
-  static const Color primaryDark   = Color(0xFF25A244);
-  static const Color primaryLight  = Color(0xFF30D158);
-  static const Color waterBlue     = appleBlue;
-  static const Color waterBlueDark = Color(0xFF006EE6);
-  static const Color sleepPurple   = applePurple;
+  // Legacy aliases
+  static const Color primaryGreen   = appleGreen;
+  static const Color primaryDark    = Color(0xFF25A244);
+  static const Color primaryLight   = Color(0xFF30D158);
+  static const Color waterBlue      = appleBlue;
+  static const Color waterBlueDark  = Color(0xFF006EE6);
+  static const Color sleepPurple    = applePurple;
   static const Color sleepPurpleDark = Color(0xFF9B3DD4);
-  static const Color weightOrange  = appleOrange;
+  static const Color weightOrange   = appleOrange;
   static const Color weightOrangeDark = Color(0xFFE68900);
-  static const Color activityRed   = appleRed;
+  static const Color activityRed    = appleRed;
   static const Color activityRedDark = Color(0xFFD4002D);
-  static const Color lightBg       = Color(0xFFF2F2F7);
-  static const Color darkBg        = blackBg;
-  static const Color darkCard      = card1;
-  static const Color darkCardLight = card2;
-  static const Color lightText     = Color(0xFF000000);
-  static const Color darkText      = white;
-  static const Color subtitleLight = Color(0xFF6B6B6B);
-  static const Color subtitleDark  = label2;
-
-  static const List<Color> greenGradient  = greenRing;
-  static const List<Color> blueGradient   = blueRing;
-  static const List<Color> purpleGradient = purpleRing;
-  static const List<Color> orangeGradient = orangeRing;
-  static const List<Color> redGradient    = redRing;
+  static const Color lightBg        = Color(0xFFF2F2F7);
+  static const Color darkBg         = blackBg;
+  static const Color subtitleLight  = Color(0xFF6E6E73);
 }
 
-// ============================================================
-// App Constants
-// ============================================================
 class AppConstants {
-  static const int    defaultWaterGoal    = 2000;
-  static const double defaultSleepGoal   = 8.0;
-  static const int    defaultActivityGoal = 30;
-  static const double defaultWeightGoal  = 65.0;
-
-  static const List<int>    waterAmounts   = [100, 200, 300, 500];
-  static const List<String> sleepQualities = ['Tốt', 'Trung bình', 'Kém'];
-
   static const List<String> activityTypes = [
-    'Đi bộ', 'Chạy bộ', 'Đạp xe', 'Bơi lội', 'Gym', 'Yoga', 'Khác',
+    'Đi bộ',
+    'Chạy bộ',
+    'Đạp xe',
+    'Bơi lội',
+    'Tập tạ',
+    'Gym',
+    'Yoga',
+    'HIIT',
+    'Leo núi',
+    'Bóng rổ',
+    'Bóng đá',
+    'Cầu lông',
+    'Khác',
   ];
 
   static const Map<String, IconData> activityIcons = {
-    'Đi bộ'  : Icons.directions_walk_rounded,
+    'Đi bộ': Icons.directions_walk_rounded,
     'Chạy bộ': Icons.directions_run_rounded,
-    'Đạp xe' : Icons.directions_bike_rounded,
+    'Đạp xe': Icons.pedal_bike_rounded,
     'Bơi lội': Icons.pool_rounded,
-    'Gym'    : Icons.fitness_center_rounded,
-    'Yoga'   : Icons.self_improvement_rounded,
-    'Khác'   : Icons.sports_rounded,
+    'Tập tạ': Icons.fitness_center_rounded,
+    'Gym': Icons.fitness_center_rounded,
+    'Yoga': Icons.self_improvement_rounded,
+    'HIIT': Icons.local_fire_department_rounded,
+    'Leo núi': Icons.landscape_rounded,
+    'Bóng rổ': Icons.sports_basketball_rounded,
+    'Bóng đá': Icons.sports_soccer_rounded,
+    'Cầu lông': Icons.sports_tennis_rounded,
+    'Khác': Icons.more_horiz_rounded,
   };
 
-  static const Map<String, double> caloriesPerMinute = {
-    'Đi bộ'  : 4.0,
-    'Chạy bộ': 10.0,
-    'Đạp xe' : 7.5,
-    'Bơi lội': 8.0,
-    'Gym'    : 6.0,
-    'Yoga'   : 3.0,
-    'Khác'   : 5.0,
-  };
+  static const List<String> sleepQuality = [
+    'Rất kém',
+    'Kém',
+    'Bình thường',
+    'Tốt',
+    'Rất tốt',
+  ];
 
-  static String getBMICategory(double bmi) {
-    if (bmi == 0)    return 'Chưa có dữ liệu';
-    if (bmi < 18.5)  return 'Thiếu cân';
-    if (bmi < 25.0)  return 'Bình thường';
-    if (bmi < 30.0)  return 'Thừa cân';
-    return 'Béo phì';
-  }
-
-  static Color getBMIColor(double bmi) {
-    if (bmi < 18.5) return AppColors.appleBlue;
-    if (bmi < 25.0) return AppColors.appleGreen;
-    if (bmi < 30.0) return AppColors.appleOrange;
-    return AppColors.appleRed;
-  }
-
-  // Responsive helpers
   static bool isWide(BuildContext context) =>
-      MediaQuery.of(context).size.width >= 600;
-  static double maxWidth = 480;
+      MediaQuery.of(context).size.width >= 768;
 }

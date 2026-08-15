@@ -15,7 +15,7 @@ class CustomBottomNav extends StatelessWidget {
     _NavItem(icon: Icons.dashboard_rounded,      label: 'Tổng quan', activeColor: AppColors.appleGreen),
     _NavItem(icon: Icons.restaurant_rounded,     label: 'Ăn uống',   activeColor: AppColors.appleOrange),
     _NavItem(icon: Icons.bolt_rounded,           label: 'Tập luyện', activeColor: AppColors.appleRed),
-    _NavItem(icon: Icons.water_drop_rounded,     label: 'Nước',      activeColor: AppColors.appleBlue),
+    _NavItem(icon: Icons.water_drop_rounded,     label: 'Nước uống', activeColor: AppColors.appleBlue),
     _NavItem(icon: Icons.bedtime_rounded,        label: 'Giấc ngủ', activeColor: AppColors.applePurple),
     _NavItem(icon: Icons.monitor_weight_rounded, label: 'Cân nặng', activeColor: AppColors.appleOrange),
     _NavItem(icon: Icons.directions_run_rounded, label: 'Vận động', activeColor: AppColors.appleRed),

@@ -1,12 +1,11 @@
-﻿/// Model ghi nháº­n giáº¥c ngá»§
 class SleepRecord {
   final int? id;
   final int userId;
-  final String sleepTime; // HH:mm hoáº·c ISO
-  final String wakeTime;  // HH:mm hoáº·c ISO
-  final double duration;  // Sá»‘ giá» ngá»§ (vd: 7.5)
-  final String quality;   // Tá»‘t, Trung bĂ¬nh, KĂ©m
-  final String date;      // yyyy-MM-dd
+  final String sleepTime;
+  final String wakeTime;
+  final double duration; // hours
+  final String quality;
+  final String date;
 
   SleepRecord({
     this.id,
@@ -18,21 +17,9 @@ class SleepRecord {
     required this.date,
   });
 
-  factory SleepRecord.fromMap(Map<String, dynamic> map) {
-    return SleepRecord(
-      id: map['id'] as int?,
-      userId: map['user_id'] as int,
-      sleepTime: map['sleep_time'] as String,
-      wakeTime: map['wake_time'] as String,
-      duration: (map['duration'] as num).toDouble(),
-      quality: map['quality'] as String,
-      date: map['date'] as String,
-    );
-  }
-
   Map<String, dynamic> toMap() {
     return {
-      if (id != null) 'id': id,
+      'id': id,
       'user_id': userId,
       'sleep_time': sleepTime,
       'wake_time': wakeTime,
@@ -41,5 +28,16 @@ class SleepRecord {
       'date': date,
     };
   }
-}
 
+  factory SleepRecord.fromMap(Map<String, dynamic> map) {
+    return SleepRecord(
+      id: map['id'],
+      userId: map['user_id'],
+      sleepTime: map['sleep_time'],
+      wakeTime: map['wake_time'],
+      duration: (map['duration'] as num).toDouble(),
+      quality: map['quality'],
+      date: map['date'],
+    );
+  }
+}

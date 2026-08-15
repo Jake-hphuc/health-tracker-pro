@@ -38,20 +38,25 @@ class WaterScreen extends StatelessWidget {
             child: Center(
               child: SingleRingWidget(
                 progress:    progress,
-                color:       AppColors.appleBlue,
-                size:        isWide ? 220 : 190,
-                strokeWidth: 22,
+                ringColor:   AppColors.appleBlue,
+                ringBgColor: AppColors.appleBlue.withValues(alpha: 0.15),
+                size:        200,
+                strokeWidth: 20,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.water_drop_rounded, color: AppColors.appleBlue, size: 22),
-                    const SizedBox(height: 6),
                     Text('$current',
                       style: const TextStyle(
-                        fontSize: 36, fontWeight: FontWeight.w800,
-                        letterSpacing: -1.5, color: Colors.white)),
+                        fontSize: 38,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.appleBlue,
+                        letterSpacing: -1,
+                      )),
                     Text('/ $target ml',
-                      style: const TextStyle(fontSize: 12, color: AppColors.label2, fontWeight: FontWeight.w500)),
+                      style: const TextStyle(fontSize: 14, color: AppColors.label2)),
+                    const SizedBox(height: 4),
+                    Text('${(progress * 100).toInt()}%',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.appleBlue)),
                   ],
                 ),
               ),
@@ -59,161 +64,155 @@ class WaterScreen extends StatelessWidget {
           ),
         ),
 
-        // Status text
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: Text(
-              progress >= 1.0
-                  ? '🎉 Xuất sắc! Đã đạt mục tiêu hôm nay!'
-                  : 'Cần uống thêm ${(target - current).clamp(0, target)} ml nữa',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600,
-                color: progress >= 1.0 ? AppColors.appleGreen : AppColors.appleBlue),
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
         // Quick add buttons
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
+          sliver: SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Thêm nhanh',
-                  style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.white : Colors.black)),
+                const Text('Thêm nhanh lượng nước',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
                 const SizedBox(height: 12),
                 Row(
-                  children: AppConstants.waterAmounts.map((amount) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: GestureDetector(
-                        onTap: () => health.addWater(amount),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 120),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.appleBlue.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppColors.appleBlue.withValues(alpha: 0.3), width: 1),
-                          ),
-                          child: Column(
-                            children: [
-                              const Icon(Icons.add, color: AppColors.appleBlue, size: 18),
-                              const SizedBox(height: 4),
-                              Text('$amount ml',
-                                style: const TextStyle(
-                                  color: AppColors.appleBlue,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  )).toList(),
+                  children: [
+                    _QuickButton(label: '+150 ml', amount: 150, color: AppColors.appleBlue, isDark: isDark),
+                    const SizedBox(width: 8),
+                    _QuickButton(label: '+250 ml', amount: 250, color: AppColors.appleBlue, isDark: isDark),
+                    const SizedBox(width: 8),
+                    _QuickButton(label: '+500 ml', amount: 500, color: AppColors.appleBlue, isDark: isDark),
+                    const SizedBox(width: 8),
+                    _QuickButton(label: '+750 ml', amount: 750, color: AppColors.appleBlue, isDark: isDark),
+                  ],
                 ),
               ],
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-        // Log title
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: Text('Nhật ký hôm nay',
-              style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.white : Colors.black)),
+        // History
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 24, isWide ? 28 : 20, 100),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Lịch sử hôm nay',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
+                const SizedBox(height: 12),
+                if (health.todayWaterList.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text('Chưa có dữ liệu hôm nay\nHãy bắt đầu uống ly nước đầu tiên! 💧',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.label2, height: 1.5)),
+                    ),
+                  )
+                else
+                  ...health.todayWaterList.map((item) => Dismissible(
+                    key: Key('water_${item.id}'),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.appleRed,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.delete_rounded, color: Colors.white),
+                    ),
+                    onDismissed: (_) => health.deleteWater(item.id!),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.card1 : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.appleBlue.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.water_drop_rounded,
+                              color: AppColors.appleBlue, size: 18),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(item.time,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                          ),
+                          Text('+${item.amount} ml',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.appleBlue,
+                            )),
+                        ],
+                      ),
+                    ),
+                  )),
+              ],
+            ),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-        // Log list
-        health.todayWaterList.isEmpty
-            ? SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Center(
-                    child: Text('Chưa có dữ liệu uống nước hôm nay',
-                      style: TextStyle(color: AppColors.label2))),
-                ),
-              )
-            : SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (ctx, i) {
-                    final item = health.todayWaterList[i];
-                    return _WaterLogTile(
-                      amount:  item.amount,
-                      time:    item.time,
-                      isDark:  isDark,
-                      isWide:  isWide,
-                      onDelete: () => health.deleteWater(item.id!),
-                    );
-                  },
-                  childCount: health.todayWaterList.length,
-                ),
-              ),
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
-      body: isWide
-          ? Center(child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600), child: body))
-          : body,
+      body: isWide ? Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 680), child: body)) : body,
     );
   }
 }
 
-class _WaterLogTile extends StatelessWidget {
+class _QuickButton extends StatelessWidget {
+  final String label;
   final int amount;
-  final String time;
+  final Color color;
   final bool isDark;
-  final bool isWide;
-  final VoidCallback onDelete;
 
-  const _WaterLogTile({
-    required this.amount, required this.time,
-    required this.isDark, required this.isWide, required this.onDelete,
+  const _QuickButton({
+    required this.label,
+    required this.amount,
+    required this.color,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 0, isWide ? 28 : 20, 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.card1 : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: ListTile(
-          leading: Container(
-            width: 38, height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.appleBlue.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.water_drop_rounded, color: AppColors.appleBlue, size: 18),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          Provider.of<HealthProvider>(context, listen: false).addWater(amount);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã thêm $amount ml nước! 💧'),
+              backgroundColor: color,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.card1 : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-          title: Text('+$amount ml',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-          subtitle: Text('Lúc $time',
-            style: const TextStyle(fontSize: 12, color: AppColors.label2)),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete_outline_rounded,
-              color: AppColors.appleRed, size: 20),
-            onPressed: onDelete,
-          ),
+          alignment: Alignment.center,
+          child: Text(label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: color,
+            )),
         ),
       ),
     );

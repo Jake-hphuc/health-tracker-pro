@@ -36,7 +36,7 @@ class _SleepScreenState extends State<SleepScreen> {
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đã lưu giấc ngủ! 😴'),
+        content: const Text('Đã lưu dữ liệu giấc ngủ! 😴'),
         backgroundColor: AppColors.applePurple,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -49,306 +49,237 @@ class _SleepScreenState extends State<SleepScreen> {
     final health = Provider.of<HealthProvider>(context);
     final isDark  = Theme.of(context).brightness == Brightness.dark;
     final isWide  = AppConstants.isWide(context);
+    final cardBg  = isDark ? AppColors.card1 : Colors.white;
 
-    final sleepP = health.goal.sleepGoal > 0 && health.latestSleep != null
-        ? (health.latestSleep!.duration / health.goal.sleepGoal).clamp(0.0, 1.5)
-        : 0.0;
-
-    Widget body = CustomScrollView(
-      slivers: [
-        // Header
-        SliverToBoxAdapter(
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
-              child: const Text('Giấc ngủ 😴',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-            ),
-          ),
+    final body = ListView(
+      padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 100),
+      children: [
+        SafeArea(
+          bottom: false,
+          child: const Text('Giấc ngủ 🌙',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         ),
+        const SizedBox(height: 20),
 
-        // Ring + latest
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            child: Center(
-              child: Column(
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: isWide ? 200.0 : 180.0,
-                        height: isWide ? 200.0 : 180.0,
-                        child: CircularProgressIndicator(
-                          value: sleepP.clamp(0.0, 1.0),
-                          strokeWidth: 20,
-                          backgroundColor: AppColors.applePurple.withValues(alpha: 0.12),
-                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.applePurple),
-                          strokeCap: StrokeCap.round,
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.bedtime_rounded, color: AppColors.applePurple, size: 24),
-                          const SizedBox(height: 6),
-                          Text(
-                            health.latestSleep != null
-                                ? health.latestSleep!.duration.toStringAsFixed(1)
-                                : '0.0',
-                            style: const TextStyle(
-                              fontSize: 36, fontWeight: FontWeight.w800,
-                              letterSpacing: -1.5, color: Colors.white)),
-                          Text('/ ${health.goal.sleepGoal} giờ',
-                            style: const TextStyle(fontSize: 12, color: AppColors.label2)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (health.latestSleep != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.applePurple.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${health.latestSleep!.sleepTime} → ${health.latestSleep!.wakeTime}  •  ${health.latestSleep!.quality}',
-                        style: const TextStyle(
-                          color: AppColors.applePurple,
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                    ),
-                ],
+        // Duration summary card
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.applePurple.withValues(alpha: 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
-            ),
+            ],
           ),
-        ),
-
-        // Entry form
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.card1 : Colors.white,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Ghi nhận giấc ngủ',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 16),
-
-                  // Time pickers
-                  Row(
-                    children: [
-                      Expanded(child: _TimePicker(
-                        label: '🌙 Đi ngủ',
-                        time:  _sleepTime,
-                        color: AppColors.applePurple,
-                        onTap: () async {
-                          final t = await showTimePicker(context: context, initialTime: _sleepTime);
-                          if (t != null) setState(() => _sleepTime = t);
-                        },
-                      )),
-                      const SizedBox(width: 12),
-                      Expanded(child: _TimePicker(
-                        label: '☀️ Thức dậy',
-                        time:  _wakeTime,
-                        color: AppColors.appleYellow,
-                        onTap: () async {
-                          final t = await showTimePicker(context: context, initialTime: _wakeTime);
-                          if (t != null) setState(() => _wakeTime = t);
-                        },
-                      )),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Duration display
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.applePurple.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.access_time_rounded,
-                          color: AppColors.applePurple, size: 18),
-                        const SizedBox(width: 8),
-                        Text('${_duration.toStringAsFixed(1)} giờ ngủ',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.applePurple, fontSize: 16)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Quality selector
-                  const Text('Chất lượng giấc ngủ',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.label2)),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: AppConstants.sleepQualities.map((q) {
-                      final isSelected = _quality == q;
-                      final qColor = q == 'Tốt' ? AppColors.appleGreen
-                          : q == 'Trung bình' ? AppColors.appleOrange
-                          : AppColors.appleRed;
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _quality = q),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? qColor.withValues(alpha: 0.2)
-                                    : (isDark ? AppColors.card2 : const Color(0xFFF2F2F7)),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? qColor : Colors.transparent,
-                                  width: 1.5),
-                              ),
-                              child: Text(q,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color:  isSelected ? qColor : AppColors.label2,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                                  fontSize: 13)),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.applePurple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text('LƯU GIẤC NGỦ',
-                        style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-        // History
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: const Text('Lịch sử giấc ngủ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-        health.sleepList.isEmpty
-            ? const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: Text('Chưa có lịch sử giấc ngủ',
-                    style: TextStyle(color: AppColors.label2))),
-                ))
-            : SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (ctx, i) {
-                    final item = health.sleepList[i];
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 0, isWide ? 28 : 20, 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.card1 : Colors.white,
-                          borderRadius: BorderRadius.circular(16)),
-                        child: ListTile(
-                          leading: Container(
-                            width: 38, height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.applePurple.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.bedtime_rounded,
-                              color: AppColors.applePurple, size: 18),
-                          ),
-                          title: Text('${item.duration.toStringAsFixed(1)} giờ (${item.quality})',
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: Text('Ngủ ${item.sleepTime} — Dậy ${item.wakeTime}  •  ${item.date}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.label2)),
-                        ),
-                      ),
-                    );
-                  },
-                  childCount: health.sleepList.length,
+          child: Column(
+            children: [
+              const Text('Thời lượng ngủ dự tính',
+                style: TextStyle(fontSize: 13, color: AppColors.label2, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Text(
+                '${_duration.toInt()}h ${((_duration % 1) * 60).toInt()}m',
+                style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.applePurple,
+                  letterSpacing: -1,
                 ),
               ),
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _TimePickerButton(
+                    label: 'Giờ đi ngủ',
+                    time: _sleepTime,
+                    icon: Icons.bedtime_rounded,
+                    color: AppColors.applePurple,
+                    onPicked: (t) => setState(() => _sleepTime = t),
+                  ),
+                  Container(width: 1, height: 40, color: isDark ? AppColors.separator : Colors.grey.shade300),
+                  _TimePickerButton(
+                    label: 'Giờ thức dậy',
+                    time: _wakeTime,
+                    icon: Icons.wb_sunny_rounded,
+                    color: AppColors.appleYellow,
+                    onPicked: (t) => setState(() => _wakeTime = t),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Quality selector
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Chất lượng giấc ngủ',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Row(
+                children: AppConstants.sleepQuality.map((q) {
+                  final isSelected = _quality == q;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _quality = q),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.applePurple
+                              : (isDark ? AppColors.card2 : const Color(0xFFF2F2F7)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          q,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected ? Colors.white : (isDark ? AppColors.label2 : Colors.black87),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Save Button
+        ElevatedButton(
+          onPressed: _save,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.applePurple,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          child: const Text('LƯU BẢN GHI GIẤC NGỦ',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        ),
+        const SizedBox(height: 24),
+
+        // History
+        const Text('Lịch sử giấc ngủ',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
+        const SizedBox(height: 12),
+        if (health.sleepList.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text('Chưa có dữ liệu giấc ngủ\nHãy ghi nhận giấc ngủ đầu tiên! 🌙',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.label2, height: 1.5)),
+            ),
+          )
+        else
+          ...health.sleepList.map((item) => Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.applePurple.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.bedtime_rounded,
+                    color: AppColors.applePurple, size: 18),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${item.sleepTime} → ${item.wakeTime}',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(item.date,
+                        style: const TextStyle(fontSize: 12, color: AppColors.label2)),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${item.duration.toStringAsFixed(1)} giờ',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.applePurple)),
+                    Text(item.quality,
+                      style: const TextStyle(fontSize: 11, color: AppColors.label2)),
+                  ],
+                ),
+              ],
+            ),
+          )),
       ],
     );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
-      body: isWide
-          ? Center(child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600), child: body))
-          : body,
+      body: isWide ? Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 680), child: body)) : body,
     );
   }
 }
 
-class _TimePicker extends StatelessWidget {
+class _TimePickerButton extends StatelessWidget {
   final String label;
   final TimeOfDay time;
+  final IconData icon;
   final Color color;
-  final VoidCallback onTap;
+  final Function(TimeOfDay) onPicked;
 
-  const _TimePicker({
-    required this.label, required this.time,
-    required this.color, required this.onTap,
+  const _TimePickerButton({
+    required this.label,
+    required this.time,
+    required this.icon,
+    required this.color,
+    required this.onPicked,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-        ),
-        child: Column(
-          children: [
-            Text(label,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.label2 : AppColors.subtitleLight)),
-            const SizedBox(height: 6),
-            Text(
-              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800,
-                color: color, letterSpacing: -0.5)),
-          ],
-        ),
+      onTap: () async {
+        final picked = await showTimePicker(context: context, initialTime: time);
+        if (picked != null) onPicked(picked);
+      },
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(fontSize: 12, color: AppColors.label2)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }

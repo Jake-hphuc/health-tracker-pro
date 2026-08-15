@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/health_provider.dart';
-import '../widgets/activity_ring.dart';
 import '../utils/constants.dart';
+import '../utils/bmi_calculator.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -12,39 +12,47 @@ class ActivityScreen extends StatefulWidget {
 }
 
 class _ActivityScreenState extends State<ActivityScreen> {
-  String _type          = 'Đi bộ';
-  final _durationCtrl   = TextEditingController(text: '30');
-  final _distanceCtrl   = TextEditingController(text: '0.0');
+  String _selectedType = 'Chạy bộ';
+  final _durationController = TextEditingController();
 
   @override
   void dispose() {
-    _durationCtrl.dispose();
-    _distanceCtrl.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
   void _save() {
-    final dur = int.tryParse(_durationCtrl.text.trim());
-    if (dur == null || dur <= 0) {
+    final dur = int.tryParse(_durationController.text.trim());
+    if (dur == null || dur <= 0 || dur > 720) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Vui lòng nhập thời gian hợp lệ (phút)'),
+          content: const Text('Vui lòng nhập thời gian hợp lệ (1 - 720 phút)'),
           backgroundColor: AppColors.appleRed,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
     }
-    final dist = double.tryParse(_distanceCtrl.text.trim()) ?? 0.0;
-    Provider.of<HealthProvider>(context, listen: false)
-        .addActivity(type: _type, durationMinutes: dur, distanceKm: dist);
+
+    final health = Provider.of<HealthProvider>(context, listen: false);
+    final calories = BmiCalculator.calculateCaloriesBurned(_selectedType, dur, 65.0);
+
+    health.addActivity(
+      type: _selectedType,
+      duration: dur,
+      calories: calories,
+    );
+
+    _durationController.clear();
+    FocusScope.of(context).unfocus();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đã lưu hoạt động vận động! 🏃'),
+        content: Text('Đã ghi nhận: $_selectedType · $dur phút (~${calories.round()} kcal)! 🔥'),
         backgroundColor: AppColors.appleRed,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -52,268 +60,195 @@ class _ActivityScreenState extends State<ActivityScreen> {
   @override
   Widget build(BuildContext context) {
     final health = Provider.of<HealthProvider>(context);
-    final isDark  = Theme.of(context).brightness == Brightness.dark;
-    final isWide  = AppConstants.isWide(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isWide = AppConstants.isWide(context);
+    final cardBg = isDark ? AppColors.card1 : Colors.white;
 
-    final current  = health.todayActivityMinutes;
-    final target   = health.goal.activityGoal;
-    final progress = target > 0 ? (current / target).clamp(0.0, 1.5) : 0.0;
-    final calories = (current * 7.5).toInt();
-
-    Widget body = CustomScrollView(
-      slivers: [
-        // Header
-        SliverToBoxAdapter(
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
-              child: const Text('Vận động 🏃',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-            ),
-          ),
+    final body = ListView(
+      padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 100),
+      children: [
+        SafeArea(
+          bottom: false,
+          child: const Text('Vận động & Thể thao 🔥',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         ),
+        const SizedBox(height: 20),
 
-        // Ring
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            child: Center(
-              child: SingleRingWidget(
-                progress:    progress,
-                color:       AppColors.appleRed,
-                size:        isWide ? 220 : 190,
-                strokeWidth: 22,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.directions_run_rounded,
-                      color: AppColors.appleRed, size: 24),
-                    const SizedBox(height: 6),
-                    Text('$current',
-                      style: const TextStyle(
-                        fontSize: 36, fontWeight: FontWeight.w800,
-                        letterSpacing: -1.5, color: Colors.white)),
-                    Text('/ $target phút',
-                      style: const TextStyle(fontSize: 12, color: AppColors.label2)),
-                    const SizedBox(height: 4),
-                    Text('~$calories kcal',
-                      style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600,
-                        color: AppColors.appleRed)),
-                  ],
-                ),
+        // Activity selector card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.appleRed.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
-            ),
+            ],
           ),
-        ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Chọn môn thể thao',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 76,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: AppConstants.activityTypes.length,
+                  itemBuilder: (context, i) {
+                    final type = AppConstants.activityTypes[i];
+                    final isSelected = _selectedType == type;
+                    final icon = AppConstants.activityIcons[type] ?? Icons.fitness_center_rounded;
 
-        // Activity Type chips
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Loại hoạt động',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: AppConstants.activityTypes.map((type) {
-                    final isSelected = _type == type;
-                    final icon = AppConstants.activityIcons[type] ?? Icons.sports_rounded;
                     return GestureDetector(
-                      onTap: () => setState(() => _type = type),
+                      onTap: () => setState(() => _selectedType = type),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.appleRed.withValues(alpha: 0.2)
+                              ? AppColors.appleRed
                               : (isDark ? AppColors.card2 : const Color(0xFFF2F2F7)),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected ? AppColors.appleRed : Colors.transparent,
-                            width: 1.5),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(icon, size: 14,
-                              color: isSelected ? AppColors.appleRed : AppColors.label2),
-                            const SizedBox(width: 6),
-                            Text(type,
+                            Icon(icon, size: 22, color: isSelected ? Colors.white : AppColors.label2),
+                            const SizedBox(height: 4),
+                            Text(
+                              type,
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                                color: isSelected ? AppColors.appleRed : AppColors.label2)),
+                                fontSize: 11,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.white : (isDark ? AppColors.label2 : Colors.black87),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     );
-                  }).toList(),
+                  },
                 ),
-              ],
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-        // Duration & Distance inputs
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.card1 : Colors.white,
-                borderRadius: BorderRadius.circular(22),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 16),
+              // Duration input
+              Row(
                 children: [
-                  const Text('Chi tiết hoạt động',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _AppleTextField(
-                          controller: _durationCtrl,
-                          label: 'Thời gian (phút)',
-                          icon: Icons.timer_outlined,
-                          color: AppColors.appleRed,
-                          keyboardType: TextInputType.number,
-                          isDark: isDark,
-                        ),
+                  Expanded(
+                    child: TextField(
+                      controller: _durationController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        hintText: 'Thời gian tập...',
+                        suffixText: 'phút',
+                        prefixIcon: Icon(Icons.timer_outlined, size: 20),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _AppleTextField(
-                          controller: _distanceCtrl,
-                          label: 'Khoảng cách (km)',
-                          icon: Icons.map_outlined,
-                          color: AppColors.appleOrange,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          isDark: isDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.appleRed,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text('LƯU HOẠT ĐỘNG',
-                        style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.appleRed,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Lưu',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        const SizedBox(height: 24),
 
-        // Today's log
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20),
-            child: const Text('Hoạt động hôm nay',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-        health.todayActivities.isEmpty
-            ? const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: Text('Chưa có hoạt động nào hôm nay',
-                    style: TextStyle(color: AppColors.label2)))))
-            : SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (ctx, i) {
-                    final item = health.todayActivities[i];
-                    final icon = AppConstants.activityIcons[item.type] ?? Icons.sports_rounded;
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 0, isWide ? 28 : 20, 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.card1 : Colors.white,
-                          borderRadius: BorderRadius.circular(16)),
-                        child: ListTile(
-                          leading: Container(
-                            width: 38, height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.appleRed.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12)),
-                            child: Icon(icon, color: AppColors.appleRed, size: 18),
-                          ),
-                          title: Text('${item.type}  •  ${item.duration} phút',
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: Text(
-                            '~${item.calories} kcal ${item.distance > 0 ? "• ${item.distance} km" : ""}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.label2)),
-                        ),
+        // History
+        const Text('Lịch sử vận động',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
+        const SizedBox(height: 12),
+        if (health.activityList.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text('Chưa có bài tập nào hôm nay\nHãy bắt đầu vận động ngay thôi! 🔥',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.label2, height: 1.5)),
+            ),
+          )
+        else
+          ...health.activityList.map((item) {
+            final icon = AppConstants.activityIcons[item.type] ?? Icons.fitness_center_rounded;
+            return Dismissible(
+              key: Key('activity_${item.id}'),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.appleRed,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.delete_rounded, color: Colors.white),
+              ),
+              onDismissed: (_) => health.deleteActivity(item.id!),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.appleRed.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    );
-                  },
-                  childCount: health.todayActivities.length,
+                      child: Icon(icon, color: AppColors.appleRed, size: 18),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.type,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text(item.date,
+                            style: const TextStyle(fontSize: 12, color: AppColors.label2)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('${item.duration} phút',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text('${item.calories.round()} kcal',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.appleRed)),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            );
+          }),
       ],
     );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
-      body: isWide
-          ? Center(child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600), child: body))
-          : body,
-    );
-  }
-}
-
-class _AppleTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final Color color;
-  final TextInputType keyboardType;
-  final bool isDark;
-
-  const _AppleTextField({
-    required this.controller, required this.label,
-    required this.icon, required this.color,
-    required this.keyboardType, required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller:   controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText:  label,
-        prefixIcon: Icon(icon, color: color),
-        filled:     true,
-        fillColor:  isDark ? AppColors.card2 : const Color(0xFFF2F2F7),
-        border:     OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: color, width: 1.5)),
-        labelStyle: const TextStyle(color: AppColors.label2),
-      ),
+      body: isWide ? Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 680), child: body)) : body,
     );
   }
 }

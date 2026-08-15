@@ -1,247 +1,188 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../utils/constants.dart';
 
-/// Vẽ một vòng tròn tiến trình đơn lẻ (như Apple Activity Ring)
-class _RingPainter extends CustomPainter {
-  final double progress;  // 0.0 → 1.0
-  final Color ringColor;
-  final Color bgColor;
-  final double strokeWidth;
-
-  const _RingPainter({
-    required this.progress,
-    required this.ringColor,
-    required this.bgColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.shortestSide - strokeWidth) / 2;
-    final rect   = Rect.fromCircle(center: center, radius: radius);
-
-    // Background ring
-    final bgPaint = Paint()
-      ..color       = bgColor
-      ..strokeWidth = strokeWidth
-      ..style       = PaintingStyle.stroke
-      ..strokeCap   = StrokeCap.round;
-    canvas.drawCircle(center, radius, bgPaint);
-
-    if (progress <= 0) return;
-
-    // Glow shadow
-    final glowPaint = Paint()
-      ..color       = ringColor.withValues(alpha: 0.35)
-      ..strokeWidth = strokeWidth + 6
-      ..style       = PaintingStyle.stroke
-      ..strokeCap   = StrokeCap.round
-      ..maskFilter  = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawArc(rect, -math.pi / 2,
-        2 * math.pi * progress.clamp(0.0, 1.0), false, glowPaint);
-
-    // Foreground ring (gradient via shader)
-    final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
-    final shader = SweepGradient(
-      startAngle: -math.pi / 2,
-      endAngle: -math.pi / 2 + (sweepAngle > 0 ? sweepAngle : 0.001),
-      colors: [ringColor, ringColor.withValues(alpha: 0.7)],
-    ).createShader(rect);
-
-    final fgPaint = Paint()
-      ..shader      = shader
-      ..strokeWidth = strokeWidth
-      ..style       = PaintingStyle.stroke
-      ..strokeCap   = StrokeCap.round;
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, fgPaint);
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter old) =>
-      old.progress != progress || old.ringColor != ringColor;
-}
-
-// ============================================================
-/// Widget 3 vòng tròn đồng tâm kiểu Apple Watch Activity Ring
-// ============================================================
-class ActivityRingWidget extends StatefulWidget {
-  final double moveProgress;     // Vận động (đỏ) — ngoài cùng
-  final double exerciseProgress; // Thể dục  (xanh lá) — giữa
-  final double hydrationProgress;// Nước uống (xanh dương) — trong cùng
-
+class ActivityRingWidget extends StatelessWidget {
+  final double moveProgress;      // 0.0 - 1.0 (Red ring)
+  final double exerciseProgress;  // 0.0 - 1.0 (Green ring)
+  final double hydrationProgress; // 0.0 - 1.0 (Blue ring)
   final double size;
-  final Widget? centerWidget;
 
   const ActivityRingWidget({
     super.key,
     required this.moveProgress,
     required this.exerciseProgress,
     required this.hydrationProgress,
-    this.size = 200,
-    this.centerWidget,
+    this.size = 140,
   });
 
   @override
-  State<ActivityRingWidget> createState() => _ActivityRingWidgetState();
-}
-
-class _ActivityRingWidgetState extends State<ActivityRingWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
-    _ctrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final s = widget.size;
-    const sw1 = 20.0; // outer
-    const sw2 = 20.0; // middle
-    const sw3 = 20.0; // inner
-    const gap  = 10.0;
-
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) {
-        final t = _anim.value;
-        return SizedBox(
-          width:  s,
-          height: s,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Outer ring — Vận động (đỏ)
-              CustomPaint(
-                size: Size(s, s),
-                painter: _RingPainter(
-                  progress:    widget.moveProgress * t,
-                  ringColor:   AppColors.appleRed,
-                  bgColor:     AppColors.appleRed.withValues(alpha: 0.15),
-                  strokeWidth: sw1,
-                ),
-              ),
-
-              // Middle ring — Thể dục (xanh lá)
-              CustomPaint(
-                size: Size(s - (sw1 + gap) * 2, s - (sw1 + gap) * 2),
-                painter: _RingPainter(
-                  progress:    widget.exerciseProgress * t,
-                  ringColor:   AppColors.appleGreen,
-                  bgColor:     AppColors.appleGreen.withValues(alpha: 0.15),
-                  strokeWidth: sw2,
-                ),
-              ),
-
-              // Inner ring — Nước (xanh dương)
-              CustomPaint(
-                size: Size(s - (sw1 + sw2 + gap * 2) * 2,
-                           s - (sw1 + sw2 + gap * 2) * 2),
-                painter: _RingPainter(
-                  progress:    widget.hydrationProgress * t,
-                  ringColor:   AppColors.appleBlue,
-                  bgColor:     AppColors.appleBlue.withValues(alpha: 0.15),
-                  strokeWidth: sw3,
-                ),
-              ),
-
-              // Center content
-              if (widget.centerWidget != null) widget.centerWidget!,
-            ],
-          ),
-        );
-      },
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _ActivityRingPainter(
+        moveProgress:      moveProgress,
+        exerciseProgress:  exerciseProgress,
+        hydrationProgress: hydrationProgress,
+      ),
     );
   }
 }
 
-// ============================================================
-/// Widget vòng tròn đơn dùng cho màn hình chi tiết
-// ============================================================
-class SingleRingWidget extends StatefulWidget {
+class _ActivityRingPainter extends CustomPainter {
+  final double moveProgress;
+  final double exerciseProgress;
+  final double hydrationProgress;
+
+  _ActivityRingPainter({
+    required this.moveProgress,
+    required this.exerciseProgress,
+    required this.hydrationProgress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center      = Offset(size.width / 2, size.height / 2);
+    final strokeWidth = size.width * 0.095;
+    final spacing     = strokeWidth * 1.15;
+
+    final r1 = (size.width / 2) - (strokeWidth / 2);
+    final r2 = r1 - spacing;
+    final r3 = r2 - spacing;
+
+    // Background tracks
+    _drawTrack(canvas, center, r1, strokeWidth, AppColors.appleRed.withValues(alpha: 0.18));
+    _drawTrack(canvas, center, r2, strokeWidth, AppColors.appleGreen.withValues(alpha: 0.18));
+    _drawTrack(canvas, center, r3, strokeWidth, AppColors.appleBlue.withValues(alpha: 0.18));
+
+    // Progress arcs
+    _drawArc(canvas, center, r1, strokeWidth, AppColors.appleRed,   moveProgress);
+    _drawArc(canvas, center, r2, strokeWidth, AppColors.appleGreen, exerciseProgress);
+    _drawArc(canvas, center, r3, strokeWidth, AppColors.appleBlue,  hydrationProgress);
+  }
+
+  void _drawTrack(Canvas canvas, Offset center, double radius, double width, Color color) {
+    final paint = Paint()
+      ..color       = color
+      ..style       = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeCap   = StrokeCap.round;
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  void _drawArc(Canvas canvas, Offset center, double radius, double width, Color color, double progress) {
+    if (progress <= 0) return;
+    final sweepAngle = (progress.clamp(0.0, 1.0)) * 2 * pi;
+    final paint = Paint()
+      ..color       = color
+      ..style       = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeCap   = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      sweepAngle,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ActivityRingPainter old) =>
+      old.moveProgress      != moveProgress ||
+      old.exerciseProgress  != exerciseProgress ||
+      old.hydrationProgress != hydrationProgress;
+}
+
+class SingleRingWidget extends StatelessWidget {
   final double progress;
-  final Color  color;
+  final Color ringColor;
+  final Color ringBgColor;
   final double size;
   final double strokeWidth;
-  final Widget child;
+  final Widget? child;
 
   const SingleRingWidget({
     super.key,
     required this.progress,
-    required this.color,
-    required this.child,
-    this.size = 180,
-    this.strokeWidth = 18,
+    required this.ringColor,
+    required this.ringBgColor,
+    this.size        = 120,
+    this.strokeWidth = 14,
+    this.child,
   });
 
   @override
-  State<SingleRingWidget> createState() => _SingleRingWidgetState();
-}
-
-class _SingleRingWidgetState extends State<SingleRingWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
-    _ctrl.forward();
-  }
-
-  @override
-  void didUpdateWidget(SingleRingWidget old) {
-    super.didUpdateWidget(old);
-    if (old.progress != widget.progress) {
-      _ctrl
-        ..reset()
-        ..forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) => Stack(
+    return SizedBox(
+      width:  size,
+      height: size,
+      child: Stack(
         alignment: Alignment.center,
         children: [
           CustomPaint(
-            size: Size(widget.size, widget.size),
-            painter: _RingPainter(
-              progress:    widget.progress * _anim.value,
-              ringColor:   widget.color,
-              bgColor:     widget.color.withValues(alpha: 0.12),
-              strokeWidth: widget.strokeWidth,
+            size: Size(size, size),
+            painter: _SingleRingPainter(
+              progress:    progress,
+              ringColor:   ringColor,
+              ringBgColor: ringBgColor,
+              strokeWidth: strokeWidth,
             ),
           ),
-          widget.child,
+          if (child != null) child!,
         ],
       ),
     );
   }
+}
+
+class _SingleRingPainter extends CustomPainter {
+  final double progress;
+  final Color ringColor;
+  final Color ringBgColor;
+  final double strokeWidth;
+
+  _SingleRingPainter({
+    required this.progress,
+    required this.ringColor,
+    required this.ringBgColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - (strokeWidth / 2);
+
+    final bgPaint = Paint()
+      ..color       = ringBgColor
+      ..style       = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap   = StrokeCap.round;
+    canvas.drawCircle(center, radius, bgPaint);
+
+    if (progress > 0) {
+      final sweepAngle = (progress.clamp(0.0, 1.0)) * 2 * pi;
+      final arcPaint = Paint()
+        ..color       = ringColor
+        ..style       = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap   = StrokeCap.round;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -pi / 2,
+        sweepAngle,
+        false,
+        arcPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleRingPainter old) =>
+      old.progress    != progress ||
+      old.ringColor   != ringColor ||
+      old.ringBgColor != ringBgColor;
 }

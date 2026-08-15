@@ -223,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Chế độ tối (Dark Mode)',
                 trailing: Switch(
                   value: isDark,
-                  onChanged: (val) => themeProvider.toggleTheme(val),
+                  onChanged: (val) => themeProvider.toggleTheme(),
                   activeColor: AppColors.appleGreen,
                 ),
               ),

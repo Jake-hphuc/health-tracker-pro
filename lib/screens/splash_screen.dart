@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
-import 'login_screen.dart';
-import 'home_screen.dart';
+import 'project_intro_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,16 +38,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.isLoggedIn) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const ProjectIntroScreen()),
+    );
   }
 
   @override
@@ -98,9 +88,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             const SizedBox(height: 24),
             FadeTransition(
               opacity: _fadeAnimation,
-              child: Column(
+              child: const Column(
                 children: [
-                  const Text(
+                  Text(
                     'Health Tracker Pro',
                     style: TextStyle(
                       fontSize: 30,
@@ -108,16 +98,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'Theo dõi & Chăm sóc sức khỏe thông minh',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.label2,
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  const CircularProgressIndicator(
+                  SizedBox(height: 48),
+                  CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.appleGreen),
                   ),
                 ],

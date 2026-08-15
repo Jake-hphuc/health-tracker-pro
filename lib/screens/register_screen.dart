@@ -67,34 +67,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Widget formContent = Form(
       key: _formKey,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Icon
+          Center(
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.appleGreen, AppColors.appleBlue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.appleGreen.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.person_add_alt_1_rounded,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
           const Text(
-            'Bắt đầu hành trình Sức khỏe 🎯',
+            'Tạo Tài Khoản Mới',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            'Điền thông tin của bạn để thiết lập hồ sơ sức khỏe cá nhân',
+          const Text(
+            'Bắt đầu hành trình chăm sóc sức khỏe toàn diện',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.label2,
-              fontSize: 14,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
           // Name Field
           TextFormField(
             controller: _nameController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Họ và tên',
-              prefixIcon: const Icon(Icons.person_outline, size: 20),
+              prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
             ),
-            validator: (val) => (val == null || val.trim().isEmpty) ? 'Vui lòng nhập tên' : null,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Vui lòng nhập họ và tên';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 16),
 
@@ -102,13 +138,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              prefixIcon: const Icon(Icons.email_outlined, size: 20),
+            decoration: const InputDecoration(
+              labelText: 'Địa chỉ Email',
+              prefixIcon: Icon(Icons.email_outlined, size: 20),
             ),
-            validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'Vui lòng nhập Email';
-              if (!val.contains('@')) return 'Email không hợp lệ';
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Vui lòng nhập Email';
+              }
+              if (!value.contains('@')) {
+                return 'Email không hợp lệ';
+              }
               return null;
             },
           ),
@@ -122,46 +162,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
               labelText: 'Mật khẩu',
               prefixIcon: const Icon(Icons.lock_outline, size: 20),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.label2),
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 20,
+                  color: AppColors.label2,
+                ),
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
-            validator: (val) {
-              if (val == null || val.isEmpty) return 'Vui lòng nhập mật khẩu';
-              if (val.length < 6) return 'Mật khẩu phải từ 6 ký tự';
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập mật khẩu';
+              }
+              if (value.length < 6) {
+                return 'Mật khẩu phải từ 6 ký tự trở lên';
+              }
               return null;
             },
           ),
           const SizedBox(height: 16),
 
-          // Height Field (For BMI)
+          // Height Field
           TextFormField(
             controller: _heightController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
               labelText: 'Chiều cao (cm)',
-              hintText: 'Ví dụ: 170',
-              prefixIcon: const Icon(Icons.height_rounded, size: 20),
+              prefixIcon: Icon(Icons.height_rounded, size: 20),
+              suffixText: 'cm',
             ),
-            validator: (val) {
-              if (val == null || val.isEmpty) return 'Vui lòng nhập chiều cao';
-              final h = double.tryParse(val);
-              if (h == null || h <= 50 || h > 250) return 'Chiều cao từ 50 - 250 cm';
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Vui lòng nhập chiều cao';
+              }
+              final h = double.tryParse(value);
+              if (h == null || h <= 50 || h > 250) {
+                return 'Chiều cao không hợp lệ (50 - 250 cm)';
+              }
               return null;
             },
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // Submit Button
+          // Register Button
           ElevatedButton(
             onPressed: authProvider.isLoading ? null : _handleRegister,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.appleGreen,
+              backgroundColor: AppColors.appleBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: authProvider.isLoading
                 ? const SizedBox(
@@ -174,6 +224,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                   ),
           ),
+          const SizedBox(height: 20),
+
+          // Back to Login Link
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Đã có tài khoản? ',
+                style: TextStyle(color: AppColors.label2, fontSize: 14),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Text(
+                  'Đăng Nhập Ngay',
+                  style: TextStyle(
+                    color: AppColors.appleBlue,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -181,24 +254,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
       appBar: AppBar(
-        title: const Text('Tạo Tài Khoản'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
-            child: isWide
-                ? Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 440),
-                      child: formContent,
+        child: isWide
+            ? Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: Container(
+                    width: 460,
+                    padding: const EdgeInsets.all(36),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.card1 : Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                  )
-                : formContent,
-          ),
-        ),
+                    child: formContent,
+                  ),
+                ),
+              )
+            : Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  child: formContent,
+                ),
+              ),
       ),
     );
   }

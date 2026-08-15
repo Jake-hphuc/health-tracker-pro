@@ -4,69 +4,58 @@ class Challenge {
   final String id;
   final String title;
   final String description;
-  final String month;
   final int targetValue;
-  final String unit;
   final int currentProgress;
+  final String unit;
   final int rewardPoints;
-  final String badgeName;
   final IconData badgeIcon;
-  final Color themeColor;
+  final Color badgeColor;
+  final String category; // 'Nước uống', 'Vận động', 'Giấc ngủ', 'Đăng nhập'
+  final bool isCompleted;
   final bool isClaimed;
 
-  Challenge({
+  const Challenge({
     required this.id,
     required this.title,
     required this.description,
-    required this.month,
     required this.targetValue,
-    required this.unit,
     required this.currentProgress,
+    required this.unit,
     required this.rewardPoints,
-    required this.badgeName,
     required this.badgeIcon,
-    required this.themeColor,
+    required this.badgeColor,
+    required this.category,
+    this.isCompleted = false,
     this.isClaimed = false,
   });
 
-  bool get isCompleted => currentProgress >= targetValue;
-  double get progressRatio => (currentProgress / targetValue).clamp(0.0, 1.0);
-
   Challenge copyWith({
+    String? id,
+    String? title,
+    String? description,
+    int? targetValue,
     int? currentProgress,
+    String? unit,
+    int? rewardPoints,
+    IconData? badgeIcon,
+    Color? badgeColor,
+    String? category,
+    bool? isCompleted,
     bool? isClaimed,
   }) {
     return Challenge(
-      id: id,
-      title: title,
-      description: description,
-      month: month,
-      targetValue: targetValue,
-      unit: unit,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      targetValue: targetValue ?? this.targetValue,
       currentProgress: currentProgress ?? this.currentProgress,
-      rewardPoints: rewardPoints,
-      badgeName: badgeName,
-      badgeIcon: badgeIcon,
-      themeColor: themeColor,
+      unit: unit ?? this.unit,
+      rewardPoints: rewardPoints ?? this.rewardPoints,
+      badgeIcon: badgeIcon ?? this.badgeIcon,
+      badgeColor: badgeColor ?? this.badgeColor,
+      category: category ?? this.category,
+      isCompleted: isCompleted ?? this.isCompleted,
       isClaimed: isClaimed ?? this.isClaimed,
     );
   }
-}
-
-class BadgeReward {
-  final String id;
-  final String name;
-  final String description;
-  final IconData icon;
-  final Color color;
-  final String unlockedDate;
-
-  BadgeReward({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.icon,
-    required this.color,
-    required this.unlockedDate,
-  });
 }

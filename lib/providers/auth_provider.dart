@@ -1,119 +1,163 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../database/database_helper.dart';
 import '../models/user.dart';
+import '../database/database_helper.dart';
+import '../utils/security_helper.dart';
+import '../utils/validators.dart';
 
 class AuthProvider with ChangeNotifier {
-  static const String _keyUserId    = 'logged_user_id';
-  static const String _keyUserEmail = 'logged_user_email';
-  static const String _keyIsAdmin   = 'logged_is_admin';
-  static const String _keyAllUsers  = 'all_registered_users';
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  static const String _keyUserId = 'logged_in_user_id';
+  static const String _keyUserEmail = 'logged_in_user_email';
+  static const String _keyUserName = 'logged_in_user_name';
+  static const String _keyUserHeight = 'logged_in_user_height';
+  static const String _keyUserIsAdmin = 'logged_in_user_is_admin';
 
   User? _currentUser;
-  bool  _isGuest   = false;
-  bool  _isLoading = false;
+  bool _isLoading = false;
   String? _errorMessage;
+  List<User> _allUsers = [];
 
-  User?   get currentUser  => _currentUser;
-  bool    get isLoggedIn   => _currentUser != null;
-  bool    get isGuest      => _isGuest;
-  bool    get isAdmin      => _currentUser?.isAdmin ?? false;
-  bool    get isLoading    => _isLoading;
+  User? get currentUser => _currentUser;
+  bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get isLoggedIn => _currentUser != null;
+  bool get isAdmin => _currentUser?.isAdmin ?? false;
+  List<User> get allRegisteredUsers => _allUsers;
 
-  AuthProvider() { _init(); }
-
-  String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    return sha256.convert(bytes).toString();
+  AuthProvider() {
+    _loadSavedUser();
   }
 
-  // Admin password hash for "Admin@123"
-  static final String _adminHash = sha256.convert(utf8.encode('Admin@123')).toString();
-  static const String _adminEmail = 'admin@healthtracker.app';
+  Future<void> _loadSavedUser() async {
+    _isLoading = true;
+    notifyListeners();
 
-  Future<void> _init() async {
-    await _seedAdminToPrefs();
-    await _loadUserFromPrefs();
-  }
-
-  /// Khởi tạo tài khoản quản trị viên nếu chưa tồn tại
-  Future<void> _seedAdminToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyAllUsers) ?? '[]';
-    final List decoded = jsonDecode(raw);
-    final users = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-    final hasAdmin = users.any((u) => u['email'] == _adminEmail);
-    if (!hasAdmin) {
-      users.add({
-        'id': 1,
-        'name': 'Quản Trị Viên (Admin)',
-        'email': _adminEmail,
-        'password': _adminHash,
-        'height': 170.0,
-        'created_at': DateTime.now().toIso8601String(),
-        'is_admin': 1,
-      });
-      await prefs.setString(_keyAllUsers, jsonEncode(users));
+    final userId = prefs.getInt(_keyUserId);
+    final userEmail = prefs.getString(_keyUserEmail);
+    final userName = prefs.getString(_keyUserName);
+    final userHeight = prefs.getDouble(_keyUserHeight);
+    final isAdmin = prefs.getBool(_keyUserIsAdmin) ?? false;
+
+    if (userId != null && userEmail != null && userName != null) {
+      _currentUser = User(
+        id: userId,
+        email: userEmail,
+        name: userName,
+        password: '',
+        height: userHeight ?? 170.0,
+        isAdmin: isAdmin,
+      );
     }
-    DatabaseHelper.instance.seedAdmin(_adminEmail, _adminHash);
+
+    _allUsers = await _db.getAllUsers();
+    _isLoading = false;
+    notifyListeners();
   }
 
-  Future<void> _loadUserFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final email = prefs.getString(_keyUserEmail);
-    if (email != null) {
-      final savedUser = await _getUserByEmailFromPrefs(email);
-      if (savedUser != null) {
-        _isGuest     = false;
-        _currentUser = savedUser;
-        notifyListeners();
-        return;
-      }
-      _currentUser = await DatabaseHelper.instance.getUserByEmail(email);
-      if (_currentUser != null) notifyListeners();
-    }
-  }
+  /// Attempts to log in a user with email and password.
+  /// 
+  /// Returns true if login successful, false otherwise.
+  /// Sets [errorMessage] if login fails.
+  /// Validates email format and password before attempting login.
+  /// Passwords are verified using SHA-256 hashing.
+  Future<bool> login(String email, String password) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
 
-  Future<User?> _getUserByEmailFromPrefs(String email) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyAllUsers) ?? '[]';
-    final List decoded = jsonDecode(raw);
     try {
-      final map = decoded.firstWhere(
-        (e) => (e['email'] as String).toLowerCase() == email.toLowerCase(),
-      ) as Map;
-      return User.fromMap(Map<String, dynamic>.from(map));
-    } catch (_) {
-      return null;
+      // Validate email format
+      if (!Validators.isValidEmail(email.trim())) {
+        _errorMessage = 'Email không hợp lệ. Vui lòng kiểm tra lại!';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Validate password not empty
+      if (password.isEmpty) {
+        _errorMessage = 'Mật khẩu không được để trống!';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Check Admin demo credentials (special case - for demo purposes)
+      if (email.trim().toLowerCase() == 'admin@healthtracker.app' && password == 'Admin@123') {
+        _currentUser = User(
+          id: 1,
+          name: 'Quản Trị Viên (Admin)',
+          email: 'admin@healthtracker.app',
+          password: 'admin',
+          height: 175.0,
+          isAdmin: true,
+        );
+        await _saveUserSession(_currentUser!);
+        _allUsers = await _db.getAllUsers();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+
+      final user = await _db.getUserByEmail(email.trim());
+      if (user == null) {
+        _errorMessage = 'Email chưa được đăng ký trong hệ thống!';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Verify password using hash comparison
+      if (!SecurityHelper.verifyPassword(password, user.password)) {
+        _errorMessage = 'Mật khẩu không chính xác!';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      _currentUser = user;
+      await _saveUserSession(user);
+      _allUsers = await _db.getAllUsers();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Đăng nhập thất bại: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 
-  Future<List<User>> getAllRegisteredUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyAllUsers) ?? '[]';
-    final List decoded = jsonDecode(raw);
-    return decoded
-        .map((e) => User.fromMap(Map<String, dynamic>.from(e)))
-        .where((u) => !u.isAdmin)
-        .toList();
-  }
-
+  /// Logs in as a guest user without authentication.
+  /// 
+  /// Guest users can explore the app without creating an account.
+  /// Guest data is not persisted and will be lost on app restart.
   void loginAsGuest() {
-    _isGuest     = true;
     _currentUser = User(
-      id: 999999,
+      id: 999,
       name: 'Khách Trải Nghiệm 👤',
-      email: 'khach@healthtracker.app',
+      email: 'guest@healthtracker.app',
       password: '',
       height: 170.0,
-      createdAt: DateTime.now().toIso8601String(),
+      isAdmin: false,
     );
     notifyListeners();
   }
 
+  /// Registers a new user account.
+  /// 
+  /// Validates all inputs before creating the account:
+  /// - Name must not be empty
+  /// - Email must be valid format
+  /// - Password must meet strength requirements (min 6 chars, 1 uppercase, 1 number)
+  /// - Height must be between 100-250 cm
+  /// 
+  /// Password is hashed using SHA-256 before storing.
+  /// Returns true if registration successful, false otherwise.
   Future<bool> register({
     required String name,
     required String email,
@@ -125,102 +169,104 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final existing = await _getUserByEmailFromPrefs(email);
-      if (existing != null) {
+      // Validate name
+      if (name.trim().isEmpty) {
+        _errorMessage = 'Họ tên không được để trống!';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Validate email
+      final emailError = Validators.getEmailError(email);
+      if (emailError != null) {
+        _errorMessage = emailError;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Validate password strength
+      final passwordError = Validators.getPasswordError(password);
+      if (passwordError != null) {
+        _errorMessage = passwordError;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Validate height
+      final heightError = Validators.getHeightError(height);
+      if (heightError != null) {
+        _errorMessage = heightError;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final existingUser = await _db.getUserByEmail(email.trim());
+      if (existingUser != null) {
         _errorMessage = 'Email này đã được đăng ký!';
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
-      final hashedPassword = _hashPassword(password);
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_keyAllUsers) ?? '[]';
-      final List decoded = jsonDecode(raw);
-      final newId = decoded.length + 1;
-      final newUserMap = {
-        'id': newId,
-        'name': name,
-        'email': email,
-        'password': hashedPassword,
-        'height': height,
-        'created_at': DateTime.now().toIso8601String(),
-        'is_admin': 0,
-      };
-      decoded.add(newUserMap);
-      await prefs.setString(_keyAllUsers, jsonEncode(decoded));
+      // Hash password before storing
+      final hashedPassword = SecurityHelper.hashPassword(password);
 
-      final newUser = User.fromMap(Map<String, dynamic>.from(newUserMap));
-      await DatabaseHelper.instance.createUser(newUser);
+      final newUser = User(
+        name: name.trim(),
+        email: email.trim(),
+        password: hashedPassword,
+        height: height,
+        isAdmin: false,
+      );
 
-      _isGuest     = false;
-      _currentUser = newUser;
-      await prefs.setString(_keyUserEmail, email);
-      await prefs.setInt(_keyUserId, newId);
+      final id = await _db.insertUser(newUser);
+      _currentUser = User(
+        id: id,
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password,
+        height: newUser.height,
+        isAdmin: false,
+      );
 
+      await _saveUserSession(_currentUser!);
+      _allUsers = await _db.getAllUsers();
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Đã xảy ra lỗi khi đăng ký tài khoản: $e';
-    }
-
-    _isLoading = false;
-    notifyListeners();
-    return false;
-  }
-
-  Future<bool> login(String email, String password) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      final hashedPassword = _hashPassword(password);
-
-      User? user = await _getUserByEmailFromPrefs(email);
-      user ??= await DatabaseHelper.instance.getUserByEmail(email);
-
-      if (user == null) {
-        _errorMessage = 'Email chưa được đăng ký trong hệ thống!';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      if (user.password != hashedPassword) {
-        _errorMessage = 'Mật khẩu không chính xác!';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      _isGuest     = false;
-      _currentUser = user;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_keyUserEmail, email);
-      await prefs.setInt(_keyUserId, user.id ?? 0);
-      await prefs.setBool(_keyIsAdmin, user.isAdmin);
-
       _isLoading = false;
       notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = 'Đã xảy ra lỗi khi đăng nhập: $e';
+      return false;
     }
-
-    _isLoading = false;
-    notifyListeners();
-    return false;
   }
 
+  Future<void> _saveUserSession(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (user.id != null) await prefs.setInt(_keyUserId, user.id!);
+    await prefs.setString(_keyUserEmail, user.email);
+    await prefs.setString(_keyUserName, user.name);
+    await prefs.setDouble(_keyUserHeight, user.height);
+    await prefs.setBool(_keyUserIsAdmin, user.isAdmin);
+  }
+
+  /// Logs out the current user.
+  /// 
+  /// Clears all user session data from SharedPreferences
+  /// and resets the current user to null.
   Future<void> logout() async {
     _currentUser = null;
-    _isGuest     = false;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyUserEmail);
     await prefs.remove(_keyUserId);
-    await prefs.remove(_keyIsAdmin);
+    await prefs.remove(_keyUserEmail);
+    await prefs.remove(_keyUserName);
+    await prefs.remove(_keyUserHeight);
+    await prefs.remove(_keyUserIsAdmin);
     notifyListeners();
   }
 }
