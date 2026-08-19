@@ -131,76 +131,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 20),
 
-        // Admin Dashboard Entry Tile
-        Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6C47FF), Color(0xFF9B8FFF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF6C47FF).withValues(alpha: 0.3),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+        // Admin Dashboard Entry Tile (Chỉ hiển thị khi đăng nhập tài khoản Quản trị viên)
+        if (isAdmin) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6C47FF), Color(0xFF9B8FFF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
               borderRadius: BorderRadius.circular(22),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const AdminDashboardScreen()),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF6C47FF).withValues(alpha: 0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen()),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.admin_panel_settings_rounded,
+                            color: Colors.white, size: 28),
                       ),
-                      child: const Icon(Icons.admin_panel_settings_rounded,
-                          color: Colors.white, size: 28),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bảng Điều Khiển Quản Trị (Admin)',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Quản lý thành viên, doanh thu quảng cáo & báo cáo KPI',
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.white70),
-                          ),
-                        ],
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bảng Điều Khiển Quản Trị (Admin)',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Quản lý thành viên, thống kê hệ thống & báo cáo',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.white70),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios_rounded,
-                        color: Colors.white70, size: 16),
-                  ],
+                      const Icon(Icons.arrow_forward_ios_rounded,
+                          color: Colors.white70, size: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
 
         // Settings Options
         Container(

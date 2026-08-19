@@ -9,19 +9,6 @@ import '../models/activity_record.dart';
 import '../models/user_goal.dart';
 import '../models/meal_record.dart';
 
-/// Database helper class for managing SQLite database operations.
-/// 
-/// Implements singleton pattern to ensure single database instance.
-/// Handles all CRUD operations for:
-/// - Users (authentication and profile)
-/// - Water intake tracking
-/// - Sleep records
-/// - Weight records
-/// - Activity records
-/// - User goals
-/// - Meal records
-/// 
-/// On web platform, uses in-memory data storage as fallback.
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -30,9 +17,9 @@ class DatabaseHelper {
   final List<User> _webUsers = [
     User(
       id: 1,
-      name: 'Quản Trị Viên (Admin)',
+      name: 'Quản Trị Viên',
       email: 'admin@healthtracker.app',
-      password: 'admin',
+      password: 'Admin@123',
       height: 175.0,
       isAdmin: true,
     ),
@@ -182,6 +169,15 @@ class DatabaseHelper {
         time TEXT NOT NULL,
         date TEXT NOT NULL
       )
+    ''');
+
+    // Seed default admin and initial users into SQLite
+    await db.execute('''
+      INSERT INTO users (name, email, password, height, is_admin)
+      VALUES 
+        ('Quản Trị Viên', 'admin@healthtracker.app', 'Admin@123', 175.0, 1),
+        ('Nguyễn Văn Minh', 'minh.nguyen@email.com', 'password123', 172.0, 0),
+        ('Lê Thu Thảo', 'thuthao.le@email.com', 'password123', 162.0, 0)
     ''');
   }
 

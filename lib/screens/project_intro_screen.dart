@@ -360,7 +360,7 @@ class ProjectIntroScreen extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text(
-                  'Đăng nhập tài khoản khác / Quản trị viên 👤',
+                  'Đăng nhập tài khoản 👤',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.label2,

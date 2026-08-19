@@ -56,12 +56,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _fillAdminAccount() {
-    _emailController.text = 'admin@healthtracker.app';
-    _passwordController.text = 'Admin@123';
-    _handleLogin();
-  }
-
   void _handleGuestLogin() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.loginAsGuest();
@@ -206,64 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         letterSpacing: 0.5),
                   ),
           ),
-          const SizedBox(height: 12),
-
-          // Quick Admin Demo Login Button
-          GestureDetector(
-            onTap: authProvider.isLoading ? null : _fillAdminAccount,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF6C47FF).withValues(alpha: 0.15),
-                    const Color(0xFF9B8FFF).withValues(alpha: 0.1),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFF6C47FF).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6C47FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.shield_rounded,
-                        color: Colors.white, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Đăng nhập nhanh quyền Admin',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF6C47FF)),
-                        ),
-                        Text(
-                          'admin@healthtracker.app / Admin@123',
-                          style: TextStyle(
-                              fontSize: 11, color: AppColors.label2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.arrow_forward_ios_rounded,
-                      size: 14, color: Color(0xFF6C47FF)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
 
           // Divider
           Row(

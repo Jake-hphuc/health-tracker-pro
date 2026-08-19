@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../database/database_helper.dart';
-import '../utils/security_helper.dart';
-import '../utils/validators.dart';
 
 class AuthProvider with ChangeNotifier {
   final DatabaseHelper _db = DatabaseHelper.instance;
@@ -57,52 +55,35 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Attempts to log in a user with email and password.
-  /// 
-  /// Returns true if login successful, false otherwise.
-  /// Sets [errorMessage] if login fails.
-  /// Validates email format and password before attempting login.
-  /// Passwords are verified using SHA-256 hashing.
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // Validate email format
-      if (!Validators.isValidEmail(email.trim())) {
-        _errorMessage = 'Email không hợp lệ. Vui lòng kiểm tra lại!';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
+      final cleanEmail = email.trim().toLowerCase();
+      var user = await _db.getUserByEmail(cleanEmail);
 
-      // Validate password not empty
-      if (password.isEmpty) {
-        _errorMessage = 'Mật khẩu không được để trống!';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      // Check Admin demo credentials (special case - for demo purposes)
-      if (email.trim().toLowerCase() == 'admin@healthtracker.app' && password == 'Admin@123') {
-        _currentUser = User(
-          id: 1,
-          name: 'Quản Trị Viên (Admin)',
+      // Nếu là tài khoản admin nhưng chưa có trong SQLite (bản DB cũ), tự động khởi tạo
+      if (user == null && cleanEmail == 'admin@healthtracker.app' && password == 'Admin@123') {
+        final adminUser = User(
+          name: 'Quản Trị Viên',
           email: 'admin@healthtracker.app',
-          password: 'admin',
+          password: 'Admin@123',
           height: 175.0,
           isAdmin: true,
         );
-        await _saveUserSession(_currentUser!);
-        _allUsers = await _db.getAllUsers();
-        _isLoading = false;
-        notifyListeners();
-        return true;
+        final id = await _db.insertUser(adminUser);
+        user = User(
+          id: id,
+          name: adminUser.name,
+          email: adminUser.email,
+          password: adminUser.password,
+          height: adminUser.height,
+          isAdmin: true,
+        );
       }
 
-      final user = await _db.getUserByEmail(email.trim());
       if (user == null) {
         _errorMessage = 'Email chưa được đăng ký trong hệ thống!';
         _isLoading = false;
@@ -110,8 +91,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
 
-      // Verify password using hash comparison
-      if (!SecurityHelper.verifyPassword(password, user.password)) {
+      if (user.password != password) {
         _errorMessage = 'Mật khẩu không chính xác!';
         _isLoading = false;
         notifyListeners();
@@ -132,10 +112,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Logs in as a guest user without authentication.
-  /// 
-  /// Guest users can explore the app without creating an account.
-  /// Guest data is not persisted and will be lost on app restart.
   void loginAsGuest() {
     _currentUser = User(
       id: 999,
@@ -148,16 +124,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Registers a new user account.
-  /// 
-  /// Validates all inputs before creating the account:
-  /// - Name must not be empty
-  /// - Email must be valid format
-  /// - Password must meet strength requirements (min 6 chars, 1 uppercase, 1 number)
-  /// - Height must be between 100-250 cm
-  /// 
-  /// Password is hashed using SHA-256 before storing.
-  /// Returns true if registration successful, false otherwise.
   Future<bool> register({
     required String name,
     required String email,
@@ -169,41 +135,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Validate name
-      if (name.trim().isEmpty) {
-        _errorMessage = 'Họ tên không được để trống!';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      // Validate email
-      final emailError = Validators.getEmailError(email);
-      if (emailError != null) {
-        _errorMessage = emailError;
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      // Validate password strength
-      final passwordError = Validators.getPasswordError(password);
-      if (passwordError != null) {
-        _errorMessage = passwordError;
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      // Validate height
-      final heightError = Validators.getHeightError(height);
-      if (heightError != null) {
-        _errorMessage = heightError;
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
       final existingUser = await _db.getUserByEmail(email.trim());
       if (existingUser != null) {
         _errorMessage = 'Email này đã được đăng ký!';
@@ -212,13 +143,10 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
 
-      // Hash password before storing
-      final hashedPassword = SecurityHelper.hashPassword(password);
-
       final newUser = User(
         name: name.trim(),
         email: email.trim(),
-        password: hashedPassword,
+        password: password,
         height: height,
         isAdmin: false,
       );
@@ -255,10 +183,6 @@ class AuthProvider with ChangeNotifier {
     await prefs.setBool(_keyUserIsAdmin, user.isAdmin);
   }
 
-  /// Logs out the current user.
-  /// 
-  /// Clears all user session data from SharedPreferences
-  /// and resets the current user to null.
   Future<void> logout() async {
     _currentUser = null;
     final prefs = await SharedPreferences.getInstance();
