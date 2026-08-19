@@ -1,17 +1,9 @@
-/// Represents a user in the Health Tracker Pro application.
-/// 
-/// Contains user profile information including:
-/// - Authentication credentials (email, hashed password)
-/// - Personal information (name, height)
-/// - Role (admin flag)
-/// 
-/// Passwords should always be hashed using SecurityHelper before storing.
 class User {
   final int? id;
   final String name;
   final String email;
-  final String password; // Should be hashed with SHA-256
-  final double height; // in centimeters
+  final String password;
+  final double height; // cm
   final bool isAdmin;
 
   User({
@@ -23,7 +15,6 @@ class User {
     this.isAdmin = false,
   });
 
-  /// Converts User object to Map for database storage.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -35,7 +26,6 @@ class User {
     };
   }
 
-  /// Creates User object from database Map.
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
       id: map['id'],

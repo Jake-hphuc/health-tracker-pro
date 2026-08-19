@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/health_provider.dart';
+import '../providers/schedule_provider.dart';
 import '../utils/constants.dart';
 import 'onboarding_flow_screen.dart';
 
@@ -42,6 +44,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (success) {
+      if (authProvider.currentUser?.id != null) {
+        final uid = authProvider.currentUser!.id!;
+        Provider.of<HealthProvider>(context, listen: false).init(uid);
+        Provider.of<ScheduleProvider>(context, listen: false).init(uid);
+      }
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
         (route) => false,

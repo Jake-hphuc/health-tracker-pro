@@ -35,9 +35,8 @@ class _WeightScreenState extends State<WeightScreen> {
       return;
     }
 
-    final auth   = Provider.of<AuthProvider>(context, listen: false);
     final health = Provider.of<HealthProvider>(context, listen: false);
-    final height = auth.currentUser?.height ?? 170.0;
+    final height = health.currentHeight;
 
     health.addWeight(w, height);
     _weightController.clear();

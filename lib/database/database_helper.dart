@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/user.dart';
+import '../models/health_profile.dart';
+import '../models/health_schedule.dart';
 import '../models/water_intake.dart';
 import '../models/sleep_record.dart';
 import '../models/weight_record.dart';
@@ -40,6 +42,53 @@ class DatabaseHelper {
       isAdmin: false,
     ),
   ];
+
+  final Map<int, HealthProfile> _webProfiles = {
+    1: HealthProfile(
+      id: 1,
+      userId: 1,
+      fullName: 'Quản Trị Viên',
+      height: 175.0,
+      currentWeight: 70.0,
+      targetWeight: 68.0,
+      healthGoal: 'Duy trì vóc dáng',
+      activityLevel: 'Vừa phải',
+      waterGoal: 2500,
+      sleepGoal: 8.0,
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
+    ),
+    2: HealthProfile(
+      id: 2,
+      userId: 2,
+      fullName: 'Nguyễn Văn Minh',
+      height: 172.0,
+      currentWeight: 68.0,
+      targetWeight: 65.0,
+      healthGoal: 'Tăng cường sức bền',
+      activityLevel: 'Cao',
+      waterGoal: 2000,
+      sleepGoal: 7.5,
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
+    ),
+    3: HealthProfile(
+      id: 3,
+      userId: 3,
+      fullName: 'Lê Thu Thảo',
+      height: 162.0,
+      currentWeight: 52.0,
+      targetWeight: 50.0,
+      healthGoal: 'Giữ dáng và dẻo dai',
+      activityLevel: 'Vừa phải',
+      waterGoal: 2000,
+      sleepGoal: 8.0,
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
+    ),
+  };
+
+  final List<HealthSchedule> _webSchedules = [];
   final List<WaterIntake> _webWater = [];
   final List<SleepRecord> _webSleep = [];
   final List<WeightRecord> _webWeight = [];
@@ -72,6 +121,7 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
+      // Create meal_records if not exist
       await db.execute('''
         CREATE TABLE IF NOT EXISTS meal_records (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,10 +137,56 @@ class DatabaseHelper {
           date TEXT NOT NULL
         )
       ''');
+
+      // Create health_profiles if not exist
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS health_profiles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL UNIQUE,
+          full_name TEXT NOT NULL,
+          date_of_birth TEXT NOT NULL DEFAULT '2000-01-01',
+          gender TEXT NOT NULL DEFAULT 'Nam',
+          height REAL NOT NULL,
+          current_weight REAL NOT NULL DEFAULT 65.0,
+          target_weight REAL NOT NULL DEFAULT 60.0,
+          health_goal TEXT NOT NULL DEFAULT 'Duy trì vóc dáng',
+          activity_level TEXT NOT NULL DEFAULT 'Vừa phải',
+          water_goal INTEGER NOT NULL DEFAULT 2000,
+          sleep_goal REAL NOT NULL DEFAULT 8.0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Create health_schedules if not exist
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS health_schedules (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT,
+          schedule_type TEXT NOT NULL,
+          scheduled_time TEXT NOT NULL,
+          repeat_type TEXT NOT NULL DEFAULT 'Hàng ngày',
+          is_completed INTEGER NOT NULL DEFAULT 0,
+          date TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+
+      // Add indexes
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_profile_user ON health_profiles(user_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_schedule_user ON health_schedules(user_id, date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_water_user ON water_intakes(user_id, date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sleep_user ON sleep_records(user_id, date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_weight_user ON weight_records(user_id, date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_act_user ON activity_records(user_id, date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_meal_user ON meal_records(user_id, date)');
     }
   }
 
   Future _createDB(Database db, int version) async {
+    // 1. Users Table
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,6 +198,43 @@ class DatabaseHelper {
       )
     ''');
 
+    // 2. Health Profiles Table (1-1 with User)
+    await db.execute('''
+      CREATE TABLE health_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL UNIQUE,
+        full_name TEXT NOT NULL,
+        date_of_birth TEXT NOT NULL DEFAULT '2000-01-01',
+        gender TEXT NOT NULL DEFAULT 'Nam',
+        height REAL NOT NULL,
+        current_weight REAL NOT NULL DEFAULT 65.0,
+        target_weight REAL NOT NULL DEFAULT 60.0,
+        health_goal TEXT NOT NULL DEFAULT 'Duy trì vóc dáng',
+        activity_level TEXT NOT NULL DEFAULT 'Vừa phải',
+        water_goal INTEGER NOT NULL DEFAULT 2000,
+        sleep_goal REAL NOT NULL DEFAULT 8.0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // 3. Health Schedules Table
+    await db.execute('''
+      CREATE TABLE health_schedules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        schedule_type TEXT NOT NULL,
+        scheduled_time TEXT NOT NULL,
+        repeat_type TEXT NOT NULL DEFAULT 'Hàng ngày',
+        is_completed INTEGER NOT NULL DEFAULT 0,
+        date TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // 4. Water Intakes Table
     await db.execute('''
       CREATE TABLE water_intakes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +245,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // 5. Sleep Records Table
     await db.execute('''
       CREATE TABLE sleep_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,6 +258,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // 6. Weight Records Table
     await db.execute('''
       CREATE TABLE weight_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,6 +269,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // 7. Activity Records Table
     await db.execute('''
       CREATE TABLE activity_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -145,6 +281,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // 8. User Goals Table
     await db.execute('''
       CREATE TABLE user_goals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,6 +292,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // 9. Meal Records Table
     await db.execute('''
       CREATE TABLE meal_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,7 +309,17 @@ class DatabaseHelper {
       )
     ''');
 
+    // Indexes for high performance query by user_id
+    await db.execute('CREATE INDEX idx_profile_user ON health_profiles(user_id)');
+    await db.execute('CREATE INDEX idx_schedule_user ON health_schedules(user_id, date)');
+    await db.execute('CREATE INDEX idx_water_user ON water_intakes(user_id, date)');
+    await db.execute('CREATE INDEX idx_sleep_user ON sleep_records(user_id, date)');
+    await db.execute('CREATE INDEX idx_weight_user ON weight_records(user_id, date)');
+    await db.execute('CREATE INDEX idx_act_user ON activity_records(user_id, date)');
+    await db.execute('CREATE INDEX idx_meal_user ON meal_records(user_id, date)');
+
     // Seed default admin and initial users into SQLite
+    final now = DateTime.now().toIso8601String();
     await db.execute('''
       INSERT INTO users (name, email, password, height, is_admin)
       VALUES 
@@ -179,9 +327,19 @@ class DatabaseHelper {
         ('Nguyễn Văn Minh', 'minh.nguyen@email.com', 'password123', 172.0, 0),
         ('Lê Thu Thảo', 'thuthao.le@email.com', 'password123', 162.0, 0)
     ''');
+
+    await db.execute('''
+      INSERT INTO health_profiles (user_id, full_name, height, current_weight, target_weight, health_goal, activity_level, water_goal, sleep_goal, created_at, updated_at)
+      VALUES
+        (1, 'Quản Trị Viên', 175.0, 70.0, 68.0, 'Duy trì vóc dáng', 'Vừa phải', 2500, 8.0, '$now', '$now'),
+        (2, 'Nguyễn Văn Minh', 172.0, 68.0, 65.0, 'Tăng cường sức bền', 'Cao', 2000, 7.5, '$now', '$now'),
+        (3, 'Lê Thu Thảo', 162.0, 52.0, 50.0, 'Giữ dáng và dẻo dai', 'Vừa phải', 2000, 8.0, '$now', '$now')
+    ''');
   }
 
-  // === User CRUD ===
+  // ==========================================
+  // === 1. USER CRUD ===
+  // ==========================================
   Future<int> insertUser(User user) async {
     if (kIsWeb) {
       final newId = ++_autoId;
@@ -201,15 +359,32 @@ class DatabaseHelper {
   }
 
   Future<User?> getUserByEmail(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
     if (kIsWeb) {
       try {
-        return _webUsers.firstWhere((u) => u.email.toLowerCase() == email.toLowerCase());
+        return _webUsers.firstWhere((u) => u.email.toLowerCase() == cleanEmail);
       } catch (_) {
         return null;
       }
     }
     final db = await database;
-    final maps = await db!.query('users', where: 'email = ?', whereArgs: [email]);
+    final maps = await db!.query('users', where: 'LOWER(email) = ?', whereArgs: [cleanEmail]);
+    if (maps.isNotEmpty) {
+      return User.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<User?> getUserById(int id) async {
+    if (kIsWeb) {
+      try {
+        return _webUsers.firstWhere((u) => u.id == id);
+      } catch (_) {
+        return null;
+      }
+    }
+    final db = await database;
+    final maps = await db!.query('users', where: 'id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) {
       return User.fromMap(maps.first);
     }
@@ -217,15 +392,171 @@ class DatabaseHelper {
   }
 
   Future<List<User>> getAllUsers() async {
-    if (kIsWeb) {
-      return List.from(_webUsers);
-    }
+    if (kIsWeb) return List.from(_webUsers);
     final db = await database;
-    final maps = await db!.query('users');
+    final maps = await db!.query('users', orderBy: 'id ASC');
     return maps.map((m) => User.fromMap(m)).toList();
   }
 
-  // === Water Intake ===
+  Future<int> updateUser(User user) async {
+    if (kIsWeb) {
+      final idx = _webUsers.indexWhere((u) => u.id == user.id);
+      if (idx != -1) _webUsers[idx] = user;
+      return 1;
+    }
+    final db = await database;
+    return await db!.update('users', user.toMap(), where: 'id = ?', whereArgs: [user.id]);
+  }
+
+  // ==========================================
+  // === 2. HEALTH PROFILE CRUD (1-1 with User) ===
+  // ==========================================
+  Future<HealthProfile?> getHealthProfile(int userId) async {
+    if (kIsWeb) {
+      return _webProfiles[userId];
+    }
+    final db = await database;
+    final maps = await db!.query(
+      'health_profiles',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    if (maps.isNotEmpty) {
+      return HealthProfile.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<void> upsertHealthProfile(HealthProfile profile) async {
+    if (kIsWeb) {
+      _webProfiles[profile.userId] = profile;
+      return;
+    }
+    final db = await database;
+    await db!.insert(
+      'health_profiles',
+      profile.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateHealthProfileCurrentWeight(int userId, double currentWeight) async {
+    final now = DateTime.now().toIso8601String();
+    if (kIsWeb) {
+      if (_webProfiles.containsKey(userId)) {
+        _webProfiles[userId] = _webProfiles[userId]!.copyWith(
+          currentWeight: currentWeight,
+          updatedAt: now,
+        );
+      }
+      return;
+    }
+    final db = await database;
+    await db!.update(
+      'health_profiles',
+      {
+        'current_weight': currentWeight,
+        'updated_at': now,
+      },
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // ==========================================
+  // === 3. HEALTH SCHEDULE CRUD ===
+  // ==========================================
+  Future<int> insertSchedule(HealthSchedule schedule) async {
+    if (kIsWeb) {
+      final newId = ++_autoId;
+      final s = schedule.copyWith(id: newId);
+      _webSchedules.add(s);
+      return newId;
+    }
+    final db = await database;
+    return await db!.insert('health_schedules', schedule.toMap());
+  }
+
+  Future<List<HealthSchedule>> getSchedulesByUserId(int userId) async {
+    if (kIsWeb) {
+      return _webSchedules.where((s) => s.userId == userId).toList()
+        ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+    }
+    final db = await database;
+    final maps = await db!.query(
+      'health_schedules',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'scheduled_time ASC, id ASC',
+    );
+    return maps.map((m) => HealthSchedule.fromMap(m)).toList();
+  }
+
+  Future<List<HealthSchedule>> getSchedulesByDate(int userId, String date) async {
+    if (kIsWeb) {
+      return _webSchedules
+          .where((s) => s.userId == userId && (s.date == date || s.repeatType != 'Một lần'))
+          .toList()
+        ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+    }
+    final db = await database;
+    final maps = await db!.query(
+      'health_schedules',
+      where: 'user_id = ? AND (date = ? OR repeat_type != ?)',
+      whereArgs: [userId, date, 'Một lần'],
+      orderBy: 'scheduled_time ASC, id ASC',
+    );
+    return maps.map((m) => HealthSchedule.fromMap(m)).toList();
+  }
+
+  Future<int> updateSchedule(HealthSchedule schedule) async {
+    if (kIsWeb) {
+      final idx = _webSchedules.indexWhere((s) => s.id == schedule.id);
+      if (idx != -1) _webSchedules[idx] = schedule;
+      return 1;
+    }
+    final db = await database;
+    return await db!.update(
+      'health_schedules',
+      schedule.toMap(),
+      where: 'id = ? AND user_id = ?',
+      whereArgs: [schedule.id, schedule.userId],
+    );
+  }
+
+  Future<int> deleteSchedule(int id, int userId) async {
+    if (kIsWeb) {
+      _webSchedules.removeWhere((s) => s.id == id && s.userId == userId);
+      return 1;
+    }
+    final db = await database;
+    return await db!.delete(
+      'health_schedules',
+      where: 'id = ? AND user_id = ?',
+      whereArgs: [id, userId],
+    );
+  }
+
+  Future<int> toggleScheduleComplete(int id, int userId, bool isCompleted) async {
+    if (kIsWeb) {
+      final idx = _webSchedules.indexWhere((s) => s.id == id && s.userId == userId);
+      if (idx != -1) {
+        _webSchedules[idx] = _webSchedules[idx].copyWith(isCompleted: isCompleted);
+      }
+      return 1;
+    }
+    final db = await database;
+    return await db!.update(
+      'health_schedules',
+      {'is_completed': isCompleted ? 1 : 0},
+      where: 'id = ? AND user_id = ?',
+      whereArgs: [id, userId],
+    );
+  }
+
+  // ==========================================
+  // === 4. WATER INTAKES CRUD ===
+  // ==========================================
   Future<int> insertWaterIntake(WaterIntake water) async {
     if (kIsWeb) {
       final newId = ++_autoId;
@@ -265,7 +596,9 @@ class DatabaseHelper {
     return await db!.delete('water_intakes', where: 'id = ?', whereArgs: [id]);
   }
 
-  // === Sleep ===
+  // ==========================================
+  // === 5. SLEEP RECORDS CRUD ===
+  // ==========================================
   Future<int> insertSleepRecord(SleepRecord sleep) async {
     if (kIsWeb) {
       final newId = ++_autoId;
@@ -298,7 +631,9 @@ class DatabaseHelper {
     return maps.map((m) => SleepRecord.fromMap(m)).toList();
   }
 
-  // === Weight ===
+  // ==========================================
+  // === 6. WEIGHT RECORDS CRUD ===
+  // ==========================================
   Future<int> insertWeightRecord(WeightRecord weight) async {
     if (kIsWeb) {
       final newId = ++_autoId;
@@ -309,10 +644,13 @@ class DatabaseHelper {
         bmi: weight.bmi,
         date: weight.date,
       ));
+      await updateHealthProfileCurrentWeight(weight.userId, weight.weight);
       return newId;
     }
     final db = await database;
-    return await db!.insert('weight_records', weight.toMap());
+    final id = await db!.insert('weight_records', weight.toMap());
+    await updateHealthProfileCurrentWeight(weight.userId, weight.weight);
+    return id;
   }
 
   Future<List<WeightRecord>> getWeightRecords(int userId) async {
@@ -329,7 +667,9 @@ class DatabaseHelper {
     return maps.map((m) => WeightRecord.fromMap(m)).toList();
   }
 
-  // === Activity ===
+  // ==========================================
+  // === 7. ACTIVITY RECORDS CRUD ===
+  // ==========================================
   Future<int> insertActivityRecord(ActivityRecord activity) async {
     if (kIsWeb) {
       final newId = ++_autoId;
@@ -370,7 +710,9 @@ class DatabaseHelper {
     return await db!.delete('activity_records', where: 'id = ?', whereArgs: [id]);
   }
 
-  // === Meal Records ===
+  // ==========================================
+  // === 8. MEAL RECORDS CRUD ===
+  // ==========================================
   Future<int> insertMealRecord(MealRecord meal) async {
     if (kIsWeb) {
       final newId = ++_autoId;
@@ -382,7 +724,7 @@ class DatabaseHelper {
         protein: meal.protein,
         carbs: meal.carbs,
         fat: meal.fat,
-        mealType: mealTypeToString(meal.mealType),
+        mealType: meal.mealType,
         photoEmoji: meal.photoEmoji,
         time: meal.time,
         date: meal.date,
@@ -392,8 +734,6 @@ class DatabaseHelper {
     final db = await database;
     return await db!.insert('meal_records', meal.toMap());
   }
-
-  static String mealTypeToString(String t) => t;
 
   Future<List<MealRecord>> getMealsByDate(int userId, String date) async {
     if (kIsWeb) {
@@ -418,7 +758,9 @@ class DatabaseHelper {
     return await db!.delete('meal_records', where: 'id = ?', whereArgs: [id]);
   }
 
-  // === User Goals ===
+  // ==========================================
+  // === 9. USER GOALS CRUD ===
+  // ==========================================
   Future<void> saveUserGoal(UserGoal goal) async {
     if (kIsWeb) {
       _webGoals[goal.userId] = goal;

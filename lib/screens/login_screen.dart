@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/health_provider.dart';
+import '../providers/schedule_provider.dart';
 import '../providers/challenge_provider.dart';
 import '../utils/constants.dart';
 import 'register_screen.dart';
@@ -38,6 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      if (authProvider.currentUser?.id != null) {
+        final uid = authProvider.currentUser!.id!;
+        Provider.of<HealthProvider>(context, listen: false).init(uid);
+        Provider.of<ScheduleProvider>(context, listen: false).init(uid);
+      }
       Provider.of<ChallengeProvider>(context, listen: false)
           .addDailyLoginPoints(10);
       Navigator.of(context).pushReplacement(
@@ -59,6 +66,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleGuestLogin() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.loginAsGuest();
+    if (authProvider.currentUser?.id != null) {
+      final uid = authProvider.currentUser!.id!;
+      Provider.of<HealthProvider>(context, listen: false).init(uid);
+      Provider.of<ScheduleProvider>(context, listen: false).init(uid);
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );

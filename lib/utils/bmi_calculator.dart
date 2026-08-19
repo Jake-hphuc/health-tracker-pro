@@ -1,12 +1,3 @@
-/// Utility class for calculating and categorizing BMI (Body Mass Index).
-/// 
-/// BMI is calculated as: weight (kg) / (height (m))²
-/// 
-/// Categories:
-/// - Underweight: < 18.5
-/// - Normal: 18.5 - 24.9
-/// - Overweight: 25.0 - 29.9
-/// - Obese: ≥ 30.0
 class BmiCalculator {
   static double calculateBmi(double weightKg, double heightCm) {
     if (heightCm <= 0) return 0;

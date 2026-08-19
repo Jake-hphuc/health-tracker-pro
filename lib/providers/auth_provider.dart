@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
+import '../models/health_profile.dart';
 import '../database/database_helper.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -160,6 +161,19 @@ class AuthProvider with ChangeNotifier {
         height: newUser.height,
         isAdmin: false,
       );
+
+      // Tạo hồ sơ sức khỏe mặc định ban đầu cho user mới
+      final now = DateTime.now().toIso8601String();
+      final initProfile = HealthProfile(
+        userId: id,
+        fullName: newUser.name,
+        height: newUser.height,
+        currentWeight: 65.0,
+        targetWeight: 60.0,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await _db.upsertHealthProfile(initProfile);
 
       await _saveUserSession(_currentUser!);
       _allUsers = await _db.getAllUsers();

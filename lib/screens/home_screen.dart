@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/health_provider.dart';
+import '../providers/schedule_provider.dart';
 import '../widgets/activity_ring.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/bottom_nav.dart';
 import '../utils/constants.dart';
+import 'schedule_screen.dart';
 import 'water_screen.dart';
 import 'sleep_screen.dart';
 import 'weight_screen.dart';
@@ -37,26 +39,32 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.currentUser?.id != null) {
-        Provider.of<HealthProvider>(context, listen: false)
-            .init(auth.currentUser!.id!);
+        final uid = auth.currentUser!.id!;
+        Provider.of<HealthProvider>(context, listen: false).init(uid);
+        Provider.of<ScheduleProvider>(context, listen: false).init(uid);
       }
     });
   }
 
-  final List<Widget> _pages = const [
-    _DashboardTab(),
-    MealScannerScreen(),
-    StartWorkoutScreen(),
-    WaterScreen(),
-    SleepScreen(),
-    WeightScreen(),
-    ActivityScreen(),
-    ChallengesScreen(),
-    KolPlansScreen(),
-    HealthTipsScreen(),
-    RewardsStoreScreen(),
-    StatisticsScreen(),
-  ];
+  void _navigateToTab(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  List<Widget> get _pages => [
+        _DashboardTab(onNavigateToTab: _navigateToTab),
+        const ScheduleScreen(),
+        const MealScannerScreen(),
+        const StartWorkoutScreen(),
+        const WaterScreen(),
+        const SleepScreen(),
+        const WeightScreen(),
+        const ActivityScreen(),
+        const ChallengesScreen(),
+        const KolPlansScreen(),
+        const HealthTipsScreen(),
+        const RewardsStoreScreen(),
+        const StatisticsScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _SideRail(
                   currentIndex: _currentIndex,
-                  onTap: (i) => setState(() => _currentIndex = i),
+                  onTap: _navigateToTab,
                 ),
                 const VerticalDivider(thickness: 0.5, width: 1),
                 Expanded(
@@ -87,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? null
           : CustomBottomNav(
               currentIndex: _currentIndex,
-              onTap: (i) => setState(() => _currentIndex = i),
+              onTap: _navigateToTab,
             ),
     );
   }
@@ -101,6 +109,7 @@ class _SideRail extends StatelessWidget {
 
   static const _items = [
     (icon: Icons.dashboard_rounded,      label: 'Tổng quan', color: AppColors.appleGreen),
+    (icon: Icons.calendar_month_rounded, label: 'Lịch trình', color: AppColors.appleBlue),
     (icon: Icons.restaurant_rounded,     label: 'Ăn uống',   color: AppColors.appleOrange),
     (icon: Icons.bolt_rounded,           label: 'Tập luyện', color: AppColors.appleRed),
     (icon: Icons.water_drop_rounded,     label: 'Nước uống', color: AppColors.appleBlue),
@@ -190,27 +199,37 @@ class _SideRail extends StatelessWidget {
 }
 
 class _DashboardTab extends StatelessWidget {
-  const _DashboardTab();
+  final Function(int) onNavigateToTab;
+
+  const _DashboardTab({required this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final health = Provider.of<HealthProvider>(context);
+    final schedule = Provider.of<ScheduleProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isWide = AppConstants.isWide(context);
     final today = DateFormat('EEEE, d MMMM', 'vi').format(DateTime.now());
 
+    final waterGoal = health.goal.waterGoal > 0 ? health.goal.waterGoal : 2000;
+    final activityGoal = health.goal.activityGoal > 0 ? health.goal.activityGoal : 30;
+
     // Apple-style ring metrics
     final moveCalories = (health.todayActivityMinutes * 6.5).round();
     final moveProgress = (moveCalories / 500).clamp(0.0, 1.0);
-    final exerciseProgress = (health.todayActivityMinutes / 30).clamp(0.0, 1.0);
-    final standProgress = (health.todayWaterTotal / 2000).clamp(0.0, 1.0);
+    final exerciseProgress = (health.todayActivityMinutes / activityGoal).clamp(0.0, 1.0);
+    final standProgress = (health.todayWaterTotal / waterGoal).clamp(0.0, 1.0);
+
+    final todaySchedules = schedule.todaySchedules;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.blackBg : AppColors.lightBg,
       body: SafeArea(
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
+            // Header: User Greeting & Actions
             SliverPadding(
               padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
               sliver: SliverToBoxAdapter(
@@ -231,7 +250,7 @@ class _DashboardTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Chào, ${auth.currentUser?.name ?? 'Bạn'} 👋',
+                          'Xin chào, ${auth.currentUser?.name ?? 'Bạn'} 👋',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
@@ -374,7 +393,7 @@ class _DashboardTab extends StatelessWidget {
 
             // Rings Section
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
+              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 16, isWide ? 28 : 20, 0),
               sliver: SliverToBoxAdapter(
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -392,16 +411,16 @@ class _DashboardTab extends StatelessWidget {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 130,
-                        height: 130,
+                        width: 120,
+                        height: 120,
                         child: ActivityRingWidget(
                           moveProgress: moveProgress,
                           exerciseProgress: exerciseProgress,
                           hydrationProgress: standProgress,
-                          size: 130,
+                          size: 120,
                         ),
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 18),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,17 +430,17 @@ class _DashboardTab extends StatelessWidget {
                               label: 'DI CHUYỂN',
                               value: '$moveCalories / 500 kcal',
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             _RingLegend(
                               color: AppColors.appleGreen,
                               label: 'TẬP LUYỆN',
-                              value: '${health.todayActivityMinutes} / 30 PHÚT',
+                              value: '${health.todayActivityMinutes} / $activityGoal PHÚT',
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             _RingLegend(
                               color: AppColors.appleBlue,
                               label: 'UỐNG NƯỚC',
-                              value: '${health.todayWaterTotal} / 2000 ML',
+                              value: '${health.todayWaterTotal} / $waterGoal ML',
                             ),
                           ],
                         ),
@@ -432,7 +451,136 @@ class _DashboardTab extends StatelessWidget {
               ),
             ),
 
-            // Metrics Grid
+            // Section: Lịch Trình Hôm Nay
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.calendar_month_rounded, color: AppColors.appleBlue, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Lịch Trình Hôm Nay',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: () => onNavigateToTab(1),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Xem tất cả',
+                                style: TextStyle(
+                                  color: AppColors.appleBlue,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.appleBlue),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (todaySchedules.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.card1 : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline_rounded, color: AppColors.appleGreen),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'Bạn chưa có lịch trình nào cho hôm nay!',
+                                style: TextStyle(fontSize: 13, color: AppColors.label2),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => onNavigateToTab(1),
+                              child: const Text('Thêm ngay', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Column(
+                        children: todaySchedules.take(3).map((item) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.card1 : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: item.isCompleted
+                                    ? AppColors.appleGreen.withValues(alpha: 0.3)
+                                    : (isDark ? AppColors.separator : const Color(0xFFE5E5EA)),
+                              ),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: item.color.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(item.icon, color: item.color, size: 18),
+                              ),
+                              title: Text(
+                                item.title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                                  color: item.isCompleted ? AppColors.label2 : null,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${item.scheduledTime} • ${item.scheduleType}',
+                                style: const TextStyle(fontSize: 11.5, color: AppColors.label2),
+                              ),
+                              trailing: IconButton(
+                                icon: Icon(
+                                  item.isCompleted
+                                      ? Icons.check_circle_rounded
+                                      : Icons.radio_button_unchecked_rounded,
+                                  color: item.isCompleted ? AppColors.appleGreen : AppColors.label3,
+                                  size: 24,
+                                ),
+                                onPressed: () => schedule.toggleComplete(item.id!),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Section: Metric Cards Grid
             SliverPadding(
               padding: EdgeInsets.fromLTRB(isWide ? 28 : 20, 20, isWide ? 28 : 20, 100),
               sliver: SliverGrid.count(
@@ -448,7 +596,7 @@ class _DashboardTab extends StatelessWidget {
                     accentColor: AppColors.appleOrange,
                     progress: (health.todayCaloriesIn / 2000).clamp(0.0, 1.0),
                     subtitle: '${health.todayMeals.length} bữa ăn hôm nay',
-                    onTap: () {},
+                    onTap: () => onNavigateToTab(2),
                   ),
                   MetricCard(
                     title: 'Nước uống',
@@ -456,35 +604,33 @@ class _DashboardTab extends StatelessWidget {
                     unit: 'ml',
                     icon: Icons.water_drop_rounded,
                     accentColor: AppColors.appleBlue,
-                    progress: (health.todayWaterTotal / 2000).clamp(0.0, 1.0),
-                    subtitle: 'Mục tiêu: 2.000 ml',
-                    onTap: () {},
+                    progress: (health.todayWaterTotal / waterGoal).clamp(0.0, 1.0),
+                    subtitle: 'Mục tiêu: $waterGoal ml',
+                    onTap: () => onNavigateToTab(4),
                   ),
                   MetricCard(
                     title: 'Giấc ngủ',
                     value: health.latestSleep != null
-                        ? '${health.latestSleep!.duration ~/ 60}h ${health.latestSleep!.duration % 60}m'
+                        ? '${health.latestSleep!.duration.toStringAsFixed(1)}h'
                         : '--',
                     unit: '',
                     icon: Icons.bedtime_rounded,
                     accentColor: AppColors.applePurple,
-                    progress: health.latestSleep != null ? (health.latestSleep!.duration / 480).clamp(0.0, 1.0) : 0.0,
+                    progress: health.latestSleep != null
+                        ? (health.latestSleep!.duration / health.goal.sleepGoal).clamp(0.0, 1.0)
+                        : 0.0,
                     subtitle: health.latestSleep?.quality ?? 'Chưa ghi nhận',
-                    onTap: () {},
+                    onTap: () => onNavigateToTab(5),
                   ),
                   MetricCard(
                     title: 'Cân nặng',
-                    value: health.latestWeight != null
-                        ? '${health.latestWeight!.weight}'
-                        : '--',
+                    value: health.currentWeight.toStringAsFixed(1),
                     unit: 'kg',
                     icon: Icons.monitor_weight_rounded,
                     accentColor: AppColors.appleOrange,
                     progress: 0.7,
-                    subtitle: health.latestWeight != null
-                        ? 'BMI: ${health.latestWeight!.bmi.toStringAsFixed(1)}'
-                        : 'Chưa ghi nhận',
-                    onTap: () {},
+                    subtitle: 'BMI: ${health.bmi.toStringAsFixed(1)} (${health.bmiClassification.split(' ').first})',
+                    onTap: () => onNavigateToTab(6),
                   ),
                 ],
               ),

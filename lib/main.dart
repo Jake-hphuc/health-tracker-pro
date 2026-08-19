@@ -6,17 +6,11 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/health_provider.dart';
+import 'providers/schedule_provider.dart';
 import 'providers/challenge_provider.dart';
 import 'screens/splash_screen.dart';
 import 'utils/constants.dart';
 
-/// Entry point of the Health Tracker Pro application.
-/// 
-/// Initializes:
-/// - Flutter bindings
-/// - Vietnamese date formatting
-/// - System UI overlay style
-/// - Provider state management
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);
@@ -167,6 +161,7 @@ class HealthTrackerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HealthProvider()),
+        ChangeNotifierProvider(create: (_) => ScheduleProvider()),
         ChangeNotifierProvider(create: (_) => ChallengeProvider()),
       ],
       child: Consumer<ThemeProvider>(

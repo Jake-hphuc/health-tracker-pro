@@ -13,6 +13,7 @@ class CustomBottomNav extends StatelessWidget {
 
   static const _items = [
     _NavItem(icon: Icons.dashboard_rounded,      label: 'Tổng quan', activeColor: AppColors.appleGreen),
+    _NavItem(icon: Icons.calendar_month_rounded, label: 'Lịch trình', activeColor: AppColors.appleBlue),
     _NavItem(icon: Icons.restaurant_rounded,     label: 'Ăn uống',   activeColor: AppColors.appleOrange),
     _NavItem(icon: Icons.bolt_rounded,           label: 'Tập luyện', activeColor: AppColors.appleRed),
     _NavItem(icon: Icons.water_drop_rounded,     label: 'Nước uống', activeColor: AppColors.appleBlue),
