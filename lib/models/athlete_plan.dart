@@ -4,6 +4,7 @@ class AthletePlan {
   final String id;
   final String name;
   final String role;
+  final String category; // Bóng đá, Boxing, Bóng rổ, Điền kinh, Thể hình, Bơi lội, Yoga
   final String avatarEmoji;
   final String proTip;
   final int dailyWaterMl;
@@ -18,6 +19,7 @@ class AthletePlan {
     required this.id,
     required this.name,
     required this.role,
+    this.category = 'Thể thao',
     required this.avatarEmoji,
     required this.proTip,
     required this.dailyWaterMl,
