@@ -178,9 +178,9 @@ class ChallengeProvider with ChangeNotifier {
     const AthletePlan(
       id: 'p_cr7',
       name: 'Cristiano Ronaldo (CR7)',
-      role: 'Huyền thoại Bóng đá Thế giới • Siêu Kỷ Luật',
+      role: 'Siêu sao Huyền thoại • The GOAT (Kỷ lục gia vĩ đại nhất)',
       category: 'Bóng đá',
-      avatarEmoji: '👑',
+      avatarEmoji: '🐐',
       proTip: 'Kỷ luật và kiên trì là chìa khóa. Tôi không bao giờ uống nước ngọt, luôn ngủ đủ giấc và tập luyện mỗi ngày.',
       dailyWaterMl: 3200,
       dailySleepHours: 8.5,
@@ -237,9 +237,9 @@ class ChallengeProvider with ChangeNotifier {
     const AthletePlan(
       id: 'p_messi',
       name: 'Lionel Messi',
-      role: 'Huyền thoại Bóng đá • Dẻo Dai & Khéo Léo',
+      role: 'Nhạc trưởng Argentina • Nghệ sĩ Sân cỏ',
       category: 'Bóng đá',
-      avatarEmoji: '🐐',
+      avatarEmoji: '🪄',
       proTip: 'Hãy lắng nghe cơ thể. Dinh dưỡng lành mạnh từ thực vật và nước lọc giúp tôi thi đấu đỉnh cao suốt 20 năm.',
       dailyWaterMl: 2800,
       dailySleepHours: 8.0,
