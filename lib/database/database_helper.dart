@@ -24,6 +24,8 @@ class DatabaseHelper {
       password: 'Admin@123',
       height: 175.0,
       isAdmin: true,
+      isLocked: false,
+      createdAt: '18/08/2026',
     ),
     User(
       id: 2,
@@ -32,6 +34,8 @@ class DatabaseHelper {
       password: 'password123',
       height: 172.0,
       isAdmin: false,
+      isLocked: false,
+      createdAt: '19/08/2026',
     ),
     User(
       id: 3,
@@ -40,6 +44,18 @@ class DatabaseHelper {
       password: 'password123',
       height: 162.0,
       isAdmin: false,
+      isLocked: false,
+      createdAt: '20/08/2026',
+    ),
+    User(
+      id: 4,
+      name: 'Trần Văn Bình',
+      email: 'binh.tran@email.com',
+      password: 'password123',
+      height: 168.0,
+      isAdmin: false,
+      isLocked: true,
+      createdAt: '19/08/2026',
     ),
   ];
 
@@ -63,12 +79,12 @@ class DatabaseHelper {
       userId: 2,
       fullName: 'Nguyễn Văn Minh',
       height: 172.0,
-      currentWeight: 68.0,
+      currentWeight: 66.8,
       targetWeight: 65.0,
       healthGoal: 'Tăng cường sức bền',
       activityLevel: 'Cao',
       waterGoal: 2000,
-      sleepGoal: 7.5,
+      sleepGoal: 8.0,
       createdAt: DateTime.now().toIso8601String(),
       updatedAt: DateTime.now().toIso8601String(),
     ),
@@ -86,12 +102,41 @@ class DatabaseHelper {
       createdAt: DateTime.now().toIso8601String(),
       updatedAt: DateTime.now().toIso8601String(),
     ),
+    4: HealthProfile(
+      id: 4,
+      userId: 4,
+      fullName: 'Trần Văn Bình',
+      height: 168.0,
+      currentWeight: 74.0,
+      targetWeight: 68.0,
+      healthGoal: 'Giảm cân',
+      activityLevel: 'Ít vận động',
+      waterGoal: 2000,
+      sleepGoal: 7.0,
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
+    ),
   };
 
   final List<HealthSchedule> _webSchedules = [];
-  final List<WaterIntake> _webWater = [];
-  final List<SleepRecord> _webSleep = [];
-  final List<WeightRecord> _webWeight = [];
+  final List<WaterIntake> _webWater = [
+    WaterIntake(id: 1, userId: 2, amount: 500, time: '07:00', date: '2026-08-17'),
+    WaterIntake(id: 2, userId: 2, amount: 600, time: '12:00', date: '2026-08-18'),
+    WaterIntake(id: 3, userId: 2, amount: 700, time: '15:00', date: '2026-08-19'),
+    WaterIntake(id: 4, userId: 2, amount: 800, time: '19:00', date: '2026-08-20'),
+  ];
+  final List<SleepRecord> _webSleep = [
+    SleepRecord(id: 1, userId: 2, sleepTime: '23:30', wakeTime: '06:00', duration: 6.5, quality: 'Khá', date: '2026-08-17'),
+    SleepRecord(id: 2, userId: 2, sleepTime: '23:00', wakeTime: '06:00', duration: 7.0, quality: 'Tốt', date: '2026-08-18'),
+    SleepRecord(id: 3, userId: 2, sleepTime: '22:30', wakeTime: '06:00', duration: 7.5, quality: 'Rất tốt', date: '2026-08-19'),
+    SleepRecord(id: 4, userId: 2, sleepTime: '22:00', wakeTime: '06:00', duration: 8.0, quality: 'Tuyệt vời', date: '2026-08-20'),
+  ];
+  final List<WeightRecord> _webWeight = [
+    WeightRecord(id: 1, userId: 2, weight: 68.0, bmi: 23.0, date: '2026-08-17'),
+    WeightRecord(id: 2, userId: 2, weight: 67.5, bmi: 22.8, date: '2026-08-18'),
+    WeightRecord(id: 3, userId: 2, weight: 67.0, bmi: 22.6, date: '2026-08-19'),
+    WeightRecord(id: 4, userId: 2, weight: 66.8, bmi: 22.5, date: '2026-08-20'),
+  ];
   final List<ActivityRecord> _webActivity = [];
   final List<MealRecord> _webMeals = [];
   final Map<int, UserGoal> _webGoals = {};
@@ -121,7 +166,6 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Create meal_records if not exist
       await db.execute('''
         CREATE TABLE IF NOT EXISTS meal_records (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,7 +182,6 @@ class DatabaseHelper {
         )
       ''');
 
-      // Create health_profiles if not exist
       await db.execute('''
         CREATE TABLE IF NOT EXISTS health_profiles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,7 +201,6 @@ class DatabaseHelper {
         )
       ''');
 
-      // Create health_schedules if not exist
       await db.execute('''
         CREATE TABLE IF NOT EXISTS health_schedules (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -174,7 +216,14 @@ class DatabaseHelper {
         )
       ''');
 
-      // Add indexes
+      // Check if users table needs is_locked / created_at columns
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN created_at TEXT NOT NULL DEFAULT "20/08/2026"');
+      } catch (_) {}
+
       await db.execute('CREATE INDEX IF NOT EXISTS idx_profile_user ON health_profiles(user_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_schedule_user ON health_schedules(user_id, date)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_water_user ON water_intakes(user_id, date)');
@@ -194,7 +243,9 @@ class DatabaseHelper {
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         height REAL NOT NULL,
-        is_admin INTEGER NOT NULL DEFAULT 0
+        is_admin INTEGER NOT NULL DEFAULT 0,
+        is_locked INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT '20/08/2026'
       )
     ''');
 
@@ -321,19 +372,49 @@ class DatabaseHelper {
     // Seed default admin and initial users into SQLite
     final now = DateTime.now().toIso8601String();
     await db.execute('''
-      INSERT INTO users (name, email, password, height, is_admin)
+      INSERT INTO users (name, email, password, height, is_admin, is_locked, created_at)
       VALUES 
-        ('Quản Trị Viên', 'admin@healthtracker.app', 'Admin@123', 175.0, 1),
-        ('Nguyễn Văn Minh', 'minh.nguyen@email.com', 'password123', 172.0, 0),
-        ('Lê Thu Thảo', 'thuthao.le@email.com', 'password123', 162.0, 0)
+        ('Quản Trị Viên', 'admin@healthtracker.app', 'Admin@123', 175.0, 1, 0, '18/08/2026'),
+        ('Nguyễn Văn Minh', 'minh.nguyen@email.com', 'password123', 172.0, 0, 0, '19/08/2026'),
+        ('Lê Thu Thảo', 'thuthao.le@email.com', 'password123', 162.0, 0, 0, '20/08/2026'),
+        ('Trần Văn Bình', 'binh.tran@email.com', 'password123', 168.0, 0, 1, '19/08/2026')
     ''');
 
     await db.execute('''
       INSERT INTO health_profiles (user_id, full_name, height, current_weight, target_weight, health_goal, activity_level, water_goal, sleep_goal, created_at, updated_at)
       VALUES
         (1, 'Quản Trị Viên', 175.0, 70.0, 68.0, 'Duy trì vóc dáng', 'Vừa phải', 2500, 8.0, '$now', '$now'),
-        (2, 'Nguyễn Văn Minh', 172.0, 68.0, 65.0, 'Tăng cường sức bền', 'Cao', 2000, 7.5, '$now', '$now'),
-        (3, 'Lê Thu Thảo', 162.0, 52.0, 50.0, 'Giữ dáng và dẻo dai', 'Vừa phải', 2000, 8.0, '$now', '$now')
+        (2, 'Nguyễn Văn Minh', 172.0, 66.8, 65.0, 'Tăng cường sức bền', 'Cao', 2000, 8.0, '$now', '$now'),
+        (3, 'Lê Thu Thảo', 162.0, 52.0, 50.0, 'Giữ dáng và dẻo dai', 'Vừa phải', 2000, 8.0, '$now', '$now'),
+        (4, 'Trần Văn Bình', 168.0, 74.0, 68.0, 'Giảm cân', 'Ít vận động', 2000, 7.0, '$now', '$now')
+    ''');
+
+    // Seed sample records for Nguyễn Văn Minh (user_id = 2) for demo
+    await db.execute('''
+      INSERT INTO weight_records (user_id, weight, bmi, date)
+      VALUES
+        (2, 68.0, 23.0, '2026-08-17'),
+        (2, 67.5, 22.8, '2026-08-18'),
+        (2, 67.0, 22.6, '2026-08-19'),
+        (2, 66.8, 22.5, '2026-08-20')
+    ''');
+
+    await db.execute('''
+      INSERT INTO water_intakes (user_id, amount, time, date)
+      VALUES
+        (2, 500, '07:00', '2026-08-17'),
+        (2, 600, '12:00', '2026-08-18'),
+        (2, 700, '15:00', '2026-08-19'),
+        (2, 800, '19:00', '2026-08-20')
+    ''');
+
+    await db.execute('''
+      INSERT INTO sleep_records (user_id, sleep_time, wake_time, duration, quality, date)
+      VALUES
+        (2, '23:30', '06:00', 6.5, 'Khá', '2026-08-17'),
+        (2, '23:00', '06:00', 7.0, 'Tốt', '2026-08-18'),
+        (2, '22:30', '06:00', 7.5, 'Rất tốt', '2026-08-19'),
+        (2, '22:00', '06:00', 8.0, 'Tuyệt vời', '2026-08-20')
     ''');
   }
 
@@ -350,6 +431,8 @@ class DatabaseHelper {
         password: user.password,
         height: user.height,
         isAdmin: user.isAdmin,
+        isLocked: user.isLocked,
+        createdAt: user.createdAt,
       );
       _webUsers.add(u);
       return newId;
@@ -406,6 +489,74 @@ class DatabaseHelper {
     }
     final db = await database;
     return await db!.update('users', user.toMap(), where: 'id = ?', whereArgs: [user.id]);
+  }
+
+  // Quản trị: Khóa / Mở khóa tài khoản
+  Future<void> toggleUserLock(int userId, bool isLocked) async {
+    if (kIsWeb) {
+      final idx = _webUsers.indexWhere((u) => u.id == userId);
+      if (idx != -1) {
+        _webUsers[idx] = _webUsers[idx].copyWith(isLocked: isLocked);
+      }
+      return;
+    }
+    final db = await database;
+    await db!.update(
+      'users',
+      {'is_locked': isLocked ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // Quản trị: Xóa người dùng và dữ liệu liên quan
+  Future<void> deleteUser(int userId) async {
+    if (kIsWeb) {
+      _webUsers.removeWhere((u) => u.id == userId);
+      _webProfiles.remove(userId);
+      _webWater.removeWhere((w) => w.userId == userId);
+      _webSleep.removeWhere((s) => s.userId == userId);
+      _webWeight.removeWhere((w) => w.userId == userId);
+      _webActivity.removeWhere((a) => a.userId == userId);
+      _webSchedules.removeWhere((s) => s.userId == userId);
+      return;
+    }
+    final db = await database;
+    await db!.delete('users', where: 'id = ?', whereArgs: [userId]);
+    await db.delete('health_profiles', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('water_intakes', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('sleep_records', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('weight_records', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('activity_records', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('health_schedules', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('user_goals', where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete('meal_records', where: 'user_id = ?', whereArgs: [userId]);
+  }
+
+  // Quản trị: Đặt lại trạng thái người dùng (Mở khóa)
+  Future<void> resetUserStatus(int userId) async {
+    await toggleUserLock(userId, false);
+  }
+
+  // Quản trị: Lấy báo cáo chi tiết sức khỏe của một user cụ thể
+  Future<Map<String, dynamic>> getUserFullHealthReport(int userId) async {
+    final user = await getUserById(userId);
+    final profile = await getHealthProfile(userId);
+    final weights = await getWeightRecords(userId);
+    final sleepList = await getSleepRecords(userId);
+    final waterList = await getWaterIntakesByDate(userId, '2026-08-20');
+    final allWaters = kIsWeb
+        ? _webWater.where((w) => w.userId == userId).toList()
+        : await (await database)!.query('water_intakes', where: 'user_id = ?', whereArgs: [userId]);
+
+    return {
+      'user': user,
+      'profile': profile,
+      'weights': weights,
+      'sleeps': sleepList,
+      'todayWaters': waterList,
+      'allWaters': allWaters,
+    };
   }
 
   // ==========================================
@@ -793,7 +944,8 @@ class DatabaseHelper {
     if (kIsWeb) {
       return {
         'totalUsers': _webUsers.length,
-        'activeUsers': _webUsers.length,
+        'activeUsers': _webUsers.where((u) => !u.isLocked).length,
+        'lockedUsers': _webUsers.where((u) => u.isLocked).length,
         'totalWater': _webWater.length + 42,
         'totalActivities': _webActivity.length + 38,
         'totalSleep': _webSleep.length + 29,
@@ -813,6 +965,8 @@ class DatabaseHelper {
 
     final db = await database;
     final userCount = Sqflite.firstIntValue(await db!.rawQuery('SELECT COUNT(*) FROM users')) ?? 0;
+    final activeCount = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM users WHERE is_locked = 0')) ?? userCount;
+    final lockedCount = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM users WHERE is_locked = 1')) ?? 0;
     final waterCount = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM water_intakes')) ?? 0;
     final activityCount = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM activity_records')) ?? 0;
     final sleepCount = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM sleep_records')) ?? 0;
@@ -837,7 +991,8 @@ class DatabaseHelper {
 
     return {
       'totalUsers': userCount,
-      'activeUsers': userCount > 0 ? userCount : 1,
+      'activeUsers': activeCount,
+      'lockedUsers': lockedCount,
       'totalWater': waterCount,
       'totalActivities': activityCount,
       'totalSleep': sleepCount,
